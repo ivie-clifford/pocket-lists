@@ -1,6 +1,9 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter, rootRouteId } from "@tanstack/react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// Service-worker registration belongs to deployed-browser checks, not route matching.
+vi.mock("@/lib/pwa-register", () => ({ setupPWA: vi.fn() }));
 
 import { routeTree } from "@/routeTree.gen";
 
