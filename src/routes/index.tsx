@@ -1,24 +1,83 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { todayItems, fromISODate } from "@/lib/pocket/dates";
+import { usePocket } from "@/lib/pocket/store";
+import { ItemRow } from "@/components/pocket/ItemRow";
+import { useToday } from "@/components/pocket/useToday";
+import { useUI } from "@/components/pocket/ui-state";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Today — Pocket Lists" },
+      { name: "description", content: "Your checklist for today: what's due and anything left over." },
+      { property: "og:title", content: "Today — Pocket Lists" },
+      { property: "og:description", content: "A calm, pocket-sized checklist notebook for everyday life." },
+    ],
+  }),
+  component: TodayPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function TodayPage() {
+  const { items, lists } = usePocket();
+  const { openQuickAdd } = useUI();
+  const today = useToday();
+  const { overdue, due } = todayItems(items, lists, today);
+  const listName = (id: string | null) => (id ? lists.find((l) => l.id === id)?.title : undefined);
+  const total = overdue.length + due.length;
+  const doneCount = due.filter((i) => i.done).length;
+  const pct = total ? (doneCount / total) * 100 : 0;
+  const dateLabel = fromISODate(today).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <section>
+      <h1 className="mt-4 text-[2.5rem] leading-none">Today</h1>
+      <p className="mt-2 text-muted-foreground">{dateLabel}</p>
+
+      {total > 0 && (
+        <div className="mt-5" aria-label={`${doneCount} of ${total} done`}>
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>
+              {doneCount} of {total} done
+            </span>
+            {doneCount === total && <span className="text-primary">All clear</span>}
+          </div>
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+      )}
+
+      {overdue.length > 0 && (
+        <div className="mt-7">
+          <h2 className="font-sans text-sm font-medium tracking-wide text-overdue uppercase">Overdue</h2>
+          <div role="list" className="mt-1">
+            {overdue.map((i) => (
+              <ItemRow key={i.id} item={i} listName={listName(i.listId)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-7">
+        {overdue.length > 0 && due.length > 0 && (
+          <h2 className="font-sans text-sm font-medium tracking-wide text-muted-foreground uppercase">Due today</h2>
+        )}
+        <div role="list" className="mt-1">
+          {due.map((i) => (
+            <ItemRow key={i.id} item={i} listName={listName(i.listId)} />
+          ))}
+        </div>
+      </div>
+
+      {total === 0 && (
+        <div className="mt-16 text-center">
+          <p className="font-serif text-2xl italic text-ink-soft">A clear page.</p>
+          <p className="mt-2 text-muted-foreground">Nothing due today.</p>
+          <button onClick={() => openQuickAdd()} className="mt-6 h-12 rounded-full border border-border bg-card px-6">
+            Add something for today
+          </button>
+        </div>
+      )}
+    </section>
   );
 }
