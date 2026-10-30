@@ -7,12 +7,12 @@ export interface PocketList {
   id: string;
   title: string;
   kind: "list" | "template";
-  note?: string;
+  note?: string | undefined;
   archived: boolean;
   order: number;
   createdAt: string;
   updatedAt: string;
-  source?: string;
+  source?: string | undefined;
 }
 
 export interface PocketItem {
@@ -20,17 +20,17 @@ export interface PocketItem {
   listId: string | null;
   text: string;
   done: boolean;
-  doneAt?: string;
-  priority?: Priority;
+  doneAt?: string | undefined;
+  priority?: Priority | undefined;
   /** ISO date (YYYY-MM-DD). For "week" items this is the Sunday ending that week. */
-  due?: string;
-  dueKind?: DueKind;
-  note?: string;
+  due?: string | undefined;
+  dueKind?: DueKind | undefined;
+  note?: string | undefined;
   order: number;
   createdAt: string;
   updatedAt: string;
-  source?: string;
-  externalId?: string;
+  source?: string | undefined;
+  externalId?: string | undefined;
 }
 
 export interface PocketData {

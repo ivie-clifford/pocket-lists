@@ -40,7 +40,7 @@ export function parsePastedList(input: string, today: string): ParsedLine[] {
         rest = rest.slice(1);
       }
       if (rest.length > 1) {
-        const due = parseDue(rest[rest.length - 1], today);
+        const due = parseDue(rest[rest.length - 1] ?? "", today);
         if (due) {
           Object.assign(out, due);
           rest = rest.slice(0, -1);
