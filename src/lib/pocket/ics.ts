@@ -3,7 +3,7 @@ import { addDays } from "./dates";
 const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/([,;])/g, "\\$1");
 
 /** All-day calendar event as an .ics file for the user to review and save. */
-export function buildIcs(opts: { id: string; title: string; date: string; note?: string }): string {
+export function buildIcs(opts: { id: string; title: string; date: string; note?: string | undefined }): string {
   const d = opts.date.replace(/-/g, "");
   const end = addDays(opts.date, 1).replace(/-/g, "");
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");

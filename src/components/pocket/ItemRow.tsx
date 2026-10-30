@@ -8,7 +8,7 @@ import { useToday } from "./useToday";
 
 const PRIORITY_DOT = { 1: "bg-p1", 2: "bg-p2", 3: "bg-p3" } as const;
 
-export function ItemRow({ item, listName, handle }: { item: PocketItem; listName?: string; handle?: React.ReactNode }) {
+export function ItemRow({ item, listName, handle }: { item: PocketItem; listName?: string | undefined; handle?: React.ReactNode }) {
   const { toggleItem } = usePocket();
   const { openItem } = useUI();
   const today = useToday();

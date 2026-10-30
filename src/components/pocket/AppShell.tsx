@@ -65,7 +65,7 @@ function NavTab({ to, icon, label, exact }: { to: "/" | "/lists" | "/templates";
   return (
     <Link
       to={to}
-      activeOptions={{ exact }}
+      activeOptions={{ exact: !!exact }}
       className="flex h-16 flex-col items-center justify-center gap-0.5 text-[12px] text-muted-foreground data-[status=active]:text-primary"
     >
       {icon}

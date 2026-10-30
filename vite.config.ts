@@ -9,7 +9,7 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // STATIC_BUILD=1 (set in vercel.json) builds a pure static site: no server bundle,
 // just dist/client with a prerendered SPA shell, assets and the offline service worker.
-const staticBuild = !!process.env.STATIC_BUILD;
+const staticBuild = !!process.env["STATIC_BUILD"];
 
 export default defineConfig({
   tanstackStart: {
@@ -18,7 +18,7 @@ export default defineConfig({
     server: { entry: "server" },
     spa: { enabled: true },
   },
-  nitro: staticBuild ? false : undefined,
+  ...(staticBuild ? { nitro: false as const } : {}),
   plugins: [
     VitePWA({
       registerType: "autoUpdate",

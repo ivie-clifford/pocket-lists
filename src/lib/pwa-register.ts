@@ -9,7 +9,7 @@ function isRefusedContext(): boolean {
     return true;
   }
   const host = window.location.hostname.toLowerCase();
-  const label = host.split(".")[0];
+  const label = host.split(".")[0] ?? "";
   const lovableHost = [".lovable.app", ".gpt-eng.com", ".gptengineer.run"].some((d) => host.endsWith(d));
   if (lovableHost && PREVIEW_LABEL.test(label)) return true;
   if (lovableHost && /^project--.+-dev$/.test(label)) return true;
