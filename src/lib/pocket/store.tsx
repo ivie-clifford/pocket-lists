@@ -73,9 +73,11 @@ export function PocketProvider({ children }: { children: ReactNode }) {
         commit({ lists, items: items.map((i) => (i.id === id ? next : i)) }, { items: [next] });
       },
       toggleItem(id) {
-        const target = cur().items.find((i) => i.id === id);
+        const { items, lists } = cur();
+        const target = items.find((i) => i.id === id);
         if (!target) return;
-        this.updateItem(id, { done: !target.done, doneAt: !target.done ? nowISO() : undefined });
+        const next = touchItem(target, { done: !target.done, doneAt: !target.done ? nowISO() : undefined });
+        commit({ lists, items: items.map((i) => (i.id === id ? next : i)) }, { items: [next] });
       },
       deleteItem(id) {
         const { items, lists } = cur();
