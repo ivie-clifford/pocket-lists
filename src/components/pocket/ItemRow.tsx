@@ -16,7 +16,7 @@ export function ItemRow({ item, listName, handle }: { item: PocketItem; listName
   const overdue = isOverdue(item, today);
 
   return (
-    <li className="flex min-h-14 items-center gap-1 border-b border-border/70 last:border-b-0">
+    <div role="listitem" className="flex min-h-14 items-center gap-1 border-b border-border/70 last:border-b-0">
       <button
         type="button"
         aria-label={item.done ? `Mark "${item.text}" not done` : `Mark "${item.text}" done`}
@@ -58,6 +58,6 @@ export function ItemRow({ item, listName, handle }: { item: PocketItem; listName
         )}
       </button>
       {handle}
-    </li>
+    </div>
   );
 }

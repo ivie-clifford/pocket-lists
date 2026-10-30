@@ -22,11 +22,11 @@ export function SortableItems({ listId, items }: { listId: string; items: Pocket
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} modifiers={[restrictToVertical]}>
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-        <ul>
+        <div role="list">
           {items.map((i) => (
             <SortableRow key={i.id} item={i} />
           ))}
-        </ul>
+        </div>
       </SortableContext>
     </DndContext>
   );
