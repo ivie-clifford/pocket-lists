@@ -30,7 +30,7 @@ export function isOverdue(item: PocketItem, today: string): boolean {
 /** Is the item shown on the Today view? */
 export function isOnToday(item: PocketItem, today: string): boolean {
   if (!item.due) return false;
-  if (item.due === today) return !item.done || (item.doneAt ?? "").slice(0, 10) === today || true;
+  if (item.due === today) return true;
   return isOverdue(item, today);
 }
 
