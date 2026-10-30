@@ -8,7 +8,7 @@ A calm, local-first checklist notebook for everyday tasks and reusable routines,
 - **Try a task:** add one for Today, then check its circle to complete it. Tap the task text to edit its date, priority or note, or to find Delete.
 - **Try a reusable list:** open Templates and choose Start list to make a working copy.
 - **Keep a backup:** use Settings to export your data. See [Your data](#your-data) before switching devices or browser contexts.
-- **Run or change the code:** see the [development guide](docs/development.md).
+- **Development setup:** see the [development guide](docs/development.md).
 
 ## Status
 
