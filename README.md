@@ -2,11 +2,17 @@
 
 A calm, local-first checklist notebook for everyday tasks and reusable routines, designed for phones and desktops.
 
-[Open the test app](https://pocket-lists.vercel.app/)
+## Start here
+
+- **Use Pocket Lists:** [open the test app](https://pocket-lists.vercel.app/). No account is required.
+- **Try a task:** add one for Today, then check its circle to complete it. Tap the task text to edit its date, priority or note, or to find Delete.
+- **Try a reusable list:** open Templates and choose Start list to make a working copy.
+- **Keep a backup:** use Settings to export your data. See [Your data](#your-data) before switching devices or browser contexts.
+- **Run or change the code:** see the [development guide](docs/development.md).
 
 ## Status
 
-Work in progress, not a verified v1 release. Core phone flows have been tested by the owner. Desktop acceptance checks remain pending. Offline use and the apparent difference between browser and installed-app data remain unresolved; do not rely on offline availability yet.
+Work in progress, not a verified v1 release. The owner reports that the core phone flows and all six desktop acceptance checks passed. Offline use and the apparent difference between browser and installed-app data remain unresolved; do not rely on offline availability yet.
 
 ## Features
 
@@ -27,24 +33,7 @@ Generic starter templates are included. Your own saved lists are not part of thi
 
 ## Development
 
-Built with React, TypeScript, TanStack Start, Tailwind CSS, and IndexedDB.
-
-```sh
-git clone https://github.com/ivie-clifford/pocket-lists.git
-cd pocket-lists
-npm install
-npm run dev
-```
-
-Checks:
-
-```sh
-npm test
-npx tsc --noEmit
-STATIC_BUILD=1 npm run build
-```
-
-Vercel uses the build settings in `vercel.json` to serve the static output. Lovable and GitHub remain connected: repository changes sync back to the editor, and pushes to the production branch trigger Vercel builds.
+See [docs/development.md](docs/development.md) for setup, checks, deployment and repository layout.
 
 ## Design and release requirements
 
