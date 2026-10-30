@@ -130,7 +130,7 @@ export function QuickAdd({ open, opts, onClose }: { open: boolean; opts: QuickAd
                 value={paste}
                 onChange={(e) => setPaste(e.target.value)}
                 rows={5}
-                placeholder={"One item per line\nP1 | Reply to Kevin | Today\nP2 | Review content | This week"}
+                placeholder={"One item per line\nP1 | Pick up groceries | Today\nP2 | Review content | This week"}
                 className={cn(inputCls, "py-3 text-base")}
               />
               <TargetSelect value={target} onChange={setTarget} lists={activeLists} allowNew />
