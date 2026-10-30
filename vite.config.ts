@@ -11,6 +11,38 @@ import { VitePWA } from "vite-plugin-pwa";
 // just dist/client with a prerendered SPA shell, assets and the offline service worker.
 const staticBuild = !!process.env["STATIC_BUILD"];
 
+const pwa = VitePWA({
+  outDir: "dist/client",
+  registerType: "autoUpdate",
+  injectRegister: null,
+  filename: "sw.js",
+  manifest: false, // served from public/manifest.webmanifest
+  devOptions: { enabled: false },
+  workbox: {
+    globPatterns: ["**/*.{js,css,html,png,svg,ico,webmanifest,woff2}"],
+    navigateFallback: "/_shell.html",
+    navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
+    cleanupOutdatedCaches: true,
+    runtimeCaching: [
+      {
+        urlPattern: ({ request }) => request.mode === "navigate",
+        handler: "NetworkFirst",
+        options: { cacheName: "pages", networkTimeoutSeconds: 3 },
+      },
+      {
+        urlPattern: ({ url }) =>
+          url.origin === "https://fonts.googleapis.com" ||
+          url.origin === "https://fonts.gstatic.com",
+        handler: "CacheFirst",
+        options: {
+          cacheName: "fonts",
+          expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+        },
+      },
+    ],
+  },
+});
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
@@ -20,30 +52,21 @@ export default defineConfig({
   },
   ...(staticBuild ? { nitro: false as const } : {}),
   plugins: [
-    VitePWA({
-      registerType: "autoUpdate",
-      injectRegister: null,
-      filename: "sw.js",
-      manifest: false, // served from public/manifest.webmanifest
-      devOptions: { enabled: false },
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,png,svg,ico,webmanifest,woff2}"],
-        navigateFallback: "/_shell.html",
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
-        cleanupOutdatedCaches: true,
-        runtimeCaching: [
-          {
-            urlPattern: ({ request }) => request.mode === "navigate",
-            handler: "NetworkFirst",
-            options: { cacheName: "pages", networkTimeoutSeconds: 3 },
-          },
-          {
-            urlPattern: ({ url }) => url.origin === "https://fonts.googleapis.com" || url.origin === "https://fonts.gstatic.com",
-            handler: "CacheFirst",
-            options: { cacheName: "fonts", expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 } },
-          },
-        ],
+    ...pwa,
+    {
+      name: "pocket-offline-after-prerender",
+      apply: "build",
+      enforce: "post",
+      buildApp: {
+        order: "post",
+        async handler() {
+          // TanStack's multi-environment build skips the PWA closeBundle path.
+          // Generate only after every client chunk and the SPA shell exist.
+          const api = pwa.find((plugin) => plugin.name === "vite-plugin-pwa")?.api;
+          if (!api) throw new Error("Offline build API is unavailable");
+          await api.generateSW();
+        },
       },
-    }),
+    },
   ],
 });
