@@ -45,6 +45,10 @@ export function QuickAdd({ open, opts, onClose }: { open: boolean; opts: QuickAd
   const parsed = useMemo(() => parsePastedList(paste, today), [paste, today]);
   const targetName = target ? lists.find((l) => l.id === target)?.title : "Today";
 
+  useEffect(() => {
+    if (!target && when === "none") setWhen("today");
+  }, [target, when]);
+
   const addTask = () => {
     const t = text.trim();
     if (!t) return;
@@ -57,7 +61,7 @@ export function QuickAdd({ open, opts, onClose }: { open: boolean; opts: QuickAd
   const addList = () => {
     const t = text.trim();
     if (!t) return;
-    const l = createList(t, opts.mode === "list" && opts.listId === "template" ? "template" : "list");
+    const l = createList(t, "list");
     onClose();
     navigate({ to: "/lists/$listId", params: { listId: l.id } });
   };
@@ -96,7 +100,7 @@ export function QuickAdd({ open, opts, onClose }: { open: boolean; opts: QuickAd
             <form className="mt-4" onSubmit={(e) => (e.preventDefault(), addTask())}>
               <input autoFocus value={text} onChange={(e) => setText(e.target.value)} placeholder="What needs doing?" className={cn(inputCls, "h-14")} />
               <div className="mt-3 flex flex-wrap gap-2">
-                {(["today", "tomorrow", "this week", "none"] as const).map((w) => (
+                {(["today", "tomorrow", "this week", "none"] as const).filter((w) => target || w !== "none").map((w) => (
                   <button type="button" key={w} className={cn(chip(when === w), "capitalize")} onClick={() => setWhen(w)}>
                     {w === "none" ? "No date" : w}
                   </button>
