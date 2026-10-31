@@ -64,5 +64,27 @@ export function dueLabel(item: PocketItem, today: string): string | null {
 }
 
 export function shortDate(iso: string): string {
-  return fromISODate(iso).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  return fromISODate(iso).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/** All tasks in active lists, plus individual tasks; templates are never tasks. */
+export function activeTasks(items: PocketItem[], lists: PocketList[]): PocketItem[] {
+  const byId = new Map(lists.map((list) => [list.id, list]));
+  return items
+    .filter((item) => {
+      if (!item.listId) return true;
+      const list = byId.get(item.listId);
+      return !!list && list.kind === "list" && !list.archived;
+    })
+    .sort(
+      (a, b) =>
+        Number(a.done) - Number(b.done) ||
+        (a.due ?? "9999").localeCompare(b.due ?? "9999") ||
+        (a.priority ?? 9) - (b.priority ?? 9) ||
+        a.order - b.order,
+    );
 }
