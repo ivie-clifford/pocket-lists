@@ -63,8 +63,8 @@ export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose:
     <Drawer open={!!item} onOpenChange={(o) => !o && close()}>
       <DrawerContent>
         {item && (
-          <div className="mx-auto w-full max-w-lg overflow-y-auto px-5 pt-3 pb-6">
-            <div className="flex items-center justify-between gap-3">
+          <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-3">
               <DrawerTitle className="font-serif text-2xl font-normal">Edit task</DrawerTitle>
               <button
                 onClick={close}
@@ -73,115 +73,117 @@ export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose:
                 Done
               </button>
             </div>
-            <DrawerDescription className="text-sm text-muted-foreground">
-              {listName ?? "No list"} · Changes save automatically
-            </DrawerDescription>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onBlur={saveText}
-              rows={2}
-              className="mt-1 w-full resize-none bg-transparent font-serif text-2xl leading-tight outline-none"
-              aria-label="Task"
-            />
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 pb-8">
+              <DrawerDescription className="text-sm text-muted-foreground">
+                {listName ?? "No list"} · Changes save automatically
+              </DrawerDescription>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onBlur={saveText}
+                rows={2}
+                className="mt-1 w-full resize-none bg-transparent font-serif text-2xl leading-tight outline-none"
+                aria-label="Task"
+              />
 
-            <Section label="Priority">
-              {([undefined, 1, 2, 3] as (Priority | undefined)[]).map((p) => (
+              <Section label="Priority">
+                {([undefined, 1, 2, 3] as (Priority | undefined)[]).map((p) => (
+                  <button
+                    key={p ?? 0}
+                    className={chip(item.priority === p)}
+                    onClick={() => updateItem(item.id, { priority: p })}
+                  >
+                    {p ? `P${p}` : "None"}
+                  </button>
+                ))}
+              </Section>
+
+              <Section label="When">
                 <button
-                  key={p ?? 0}
-                  className={chip(item.priority === p)}
-                  onClick={() => updateItem(item.id, { priority: p })}
+                  className={chip(dueChoice === "none")}
+                  onClick={() => setDue({ due: undefined, dueKind: undefined })}
                 >
-                  {p ? `P${p}` : "None"}
+                  None
                 </button>
-              ))}
-            </Section>
+                <button
+                  className={chip(dueChoice === "today")}
+                  onClick={() => setDue({ due: today, dueKind: "day" })}
+                >
+                  Today
+                </button>
+                <button
+                  className={chip(dueChoice === "tomorrow")}
+                  onClick={() => setDue({ due: addDays(today, 1), dueKind: "day" })}
+                >
+                  Tomorrow
+                </button>
+                <button
+                  className={chip(dueChoice === "week")}
+                  onClick={() => setDue({ due: endOfWeek(today), dueKind: "week" })}
+                >
+                  This week
+                </button>
+                <label
+                  className={cn(chip(dueChoice === "date"), "relative inline-flex items-center")}
+                >
+                  {dueChoice === "date" && item.due ? item.due : "Pick date"}
+                  <input
+                    type="date"
+                    className="absolute inset-0 opacity-0"
+                    value={item.due ?? ""}
+                    onChange={(e) =>
+                      e.target.value && setDue({ due: e.target.value, dueKind: "day" })
+                    }
+                  />
+                </label>
+              </Section>
 
-            <Section label="When">
-              <button
-                className={chip(dueChoice === "none")}
-                onClick={() => setDue({ due: undefined, dueKind: undefined })}
-              >
-                None
-              </button>
-              <button
-                className={chip(dueChoice === "today")}
-                onClick={() => setDue({ due: today, dueKind: "day" })}
-              >
-                Today
-              </button>
-              <button
-                className={chip(dueChoice === "tomorrow")}
-                onClick={() => setDue({ due: addDays(today, 1), dueKind: "day" })}
-              >
-                Tomorrow
-              </button>
-              <button
-                className={chip(dueChoice === "week")}
-                onClick={() => setDue({ due: endOfWeek(today), dueKind: "week" })}
-              >
-                This week
-              </button>
-              <label
-                className={cn(chip(dueChoice === "date"), "relative inline-flex items-center")}
-              >
-                {dueChoice === "date" && item.due ? item.due : "Pick date"}
-                <input
-                  type="date"
-                  className="absolute inset-0 opacity-0"
-                  value={item.due ?? ""}
-                  onChange={(e) =>
-                    e.target.value && setDue({ due: e.target.value, dueKind: "day" })
-                  }
+              <label className="mt-5 block text-sm text-muted-foreground">
+                Note
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  onBlur={saveText}
+                  rows={3}
+                  placeholder="Anything to remember…"
+                  className="mt-1.5 w-full rounded-xl border border-input bg-card p-3 text-base text-foreground outline-none focus:border-ring"
                 />
               </label>
-            </Section>
 
-            <label className="mt-5 block text-sm text-muted-foreground">
-              Note
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                onBlur={saveText}
-                rows={3}
-                placeholder="Anything to remember…"
-                className="mt-1.5 w-full rounded-xl border border-input bg-card p-3 text-base text-foreground outline-none focus:border-ring"
-              />
-            </label>
-
-            <div className="mt-5 flex flex-col gap-1">
-              {item.due && (
+              <div className="mt-5 flex flex-col gap-1">
+                {item.due && (
+                  <button
+                    className="flex h-12 items-center gap-3 rounded-xl px-2 text-left hover:bg-muted"
+                    onClick={() =>
+                      downloadFile(
+                        `${item.text.slice(0, 40).replace(/[^\w\- ]/g, "") || "task"}.ics`,
+                        buildIcs({
+                          id: item.id,
+                          title: text.trim() || item.text,
+                          date: item.due!,
+                          note: note.trim() || undefined,
+                        }),
+                        "text/calendar",
+                      )
+                    }
+                  >
+                    <CalendarPlus className="h-5 w-5 text-primary" /> Add to calendar
+                  </button>
+                )}
                 <button
-                  className="flex h-12 items-center gap-3 rounded-xl px-2 text-left hover:bg-muted"
-                  onClick={() =>
-                    downloadFile(
-                      `${item.text.slice(0, 40).replace(/[^\w\- ]/g, "") || "task"}.ics`,
-                      buildIcs({
-                        id: item.id,
-                        title: text.trim() || item.text,
-                        date: item.due!,
-                        note: note.trim() || undefined,
-                      }),
-                      "text/calendar",
-                    )
-                  }
+                  className="flex h-12 items-center gap-3 rounded-xl px-2 text-left text-destructive hover:bg-muted"
+                  onClick={() => {
+                    const removed = deleteItem(item.id);
+                    onClose();
+                    if (removed)
+                      toast("Task deleted", {
+                        action: { label: "Undo", onClick: () => restoreItem(removed) },
+                      });
+                  }}
                 >
-                  <CalendarPlus className="h-5 w-5 text-primary" /> Add to calendar
+                  <Trash2 className="h-5 w-5" /> Delete task
                 </button>
-              )}
-              <button
-                className="flex h-12 items-center gap-3 rounded-xl px-2 text-left text-destructive hover:bg-muted"
-                onClick={() => {
-                  const removed = deleteItem(item.id);
-                  onClose();
-                  if (removed)
-                    toast("Task deleted", {
-                      action: { label: "Undo", onClick: () => restoreItem(removed) },
-                    });
-                }}
-              >
-                <Trash2 className="h-5 w-5" /> Delete task
-              </button>
+              </div>
             </div>
           </div>
         )}
