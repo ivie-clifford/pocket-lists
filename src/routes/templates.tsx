@@ -7,9 +7,15 @@ export const Route = createFileRoute("/templates")({
   head: () => ({
     meta: [
       { title: "Templates — Pocket Lists" },
-      { name: "description", content: "Reusable checklists for packing, weekly resets, errands and more." },
+      {
+        name: "description",
+        content: "Reusable checklists for packing, weekly resets, errands and more.",
+      },
       { property: "og:title", content: "Templates — Pocket Lists" },
-      { property: "og:description", content: "Reusable checklists for packing, weekly resets, errands and more." },
+      {
+        property: "og:description",
+        content: "Reusable checklists for packing, weekly resets, errands and more.",
+      },
     ],
   }),
   component: TemplatesPage,
@@ -43,9 +49,12 @@ function TemplatesPage() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="New template name"
-          className="h-12 flex-1 rounded-full border border-input bg-card px-5 outline-none focus:border-ring"
+          className="h-12 min-w-0 flex-1 rounded-full border border-input bg-card px-5 outline-none focus:border-ring"
         />
-        <button className="h-12 rounded-full bg-primary px-5 text-primary-foreground disabled:opacity-50" disabled={!title.trim()}>
+        <button
+          className="h-12 rounded-full bg-primary px-5 text-primary-foreground disabled:opacity-50"
+          disabled={!title.trim()}
+        >
           Create
         </button>
       </form>
