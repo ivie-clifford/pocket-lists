@@ -20,7 +20,10 @@ function Shell({ children }: { children: ReactNode }) {
   const [itemId, setItemId] = useState<string | null>(null);
   const [qa, setQa] = useState<{ open: boolean; opts: QuickAddOpts }>({ open: false, opts: {} });
   const ui = useMemo(
-    () => ({ openItem: setItemId, openQuickAdd: (opts: QuickAddOpts = {}) => setQa({ open: true, opts }) }),
+    () => ({
+      openItem: setItemId,
+      openQuickAdd: (opts: QuickAddOpts = {}) => setQa({ open: true, opts }),
+    }),
     [],
   );
 
@@ -31,20 +34,24 @@ function Shell({ children }: { children: ReactNode }) {
           <Link to="/" className="font-serif text-lg italic text-ink-soft">
             Pocket Lists
           </Link>
-          <Link to="/settings" aria-label="Settings" className="-mr-2 grid h-11 w-11 place-items-center rounded-full text-ink-soft hover:bg-muted">
-            <Settings className="h-5 w-5" />
-          </Link>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => ui.openQuickAdd()}
+              className="inline-flex h-11 items-center gap-1 rounded-full bg-primary px-4 text-primary-foreground"
+            >
+              <Plus className="h-4 w-4" /> Add
+            </button>
+            <Link
+              to="/settings"
+              aria-label="Settings"
+              className="-mr-2 grid h-11 w-11 place-items-center rounded-full text-ink-soft hover:bg-muted"
+            >
+              <Settings className="h-5 w-5" />
+            </Link>
+          </div>
         </header>
         <main className="flex-1 px-5 pb-36">{ready ? children : null}</main>
       </div>
-
-      <button
-        onClick={() => ui.openQuickAdd()}
-        aria-label="Quick add"
-        className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] z-40 grid h-15 w-15 place-items-center rounded-full bg-primary p-4 text-primary-foreground shadow-lg shadow-primary/25 active:scale-95"
-      >
-        <Plus className="h-7 w-7" />
-      </button>
 
       <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur">
         <div className="mx-auto grid max-w-lg grid-cols-3">
@@ -55,13 +62,27 @@ function Shell({ children }: { children: ReactNode }) {
       </nav>
 
       <ItemSheet itemId={itemId} onClose={() => setItemId(null)} />
-      <QuickAdd open={qa.open} opts={qa.opts} onClose={() => setQa((s) => ({ ...s, open: false }))} />
+      <QuickAdd
+        open={qa.open}
+        opts={qa.opts}
+        onClose={() => setQa((s) => ({ ...s, open: false }))}
+      />
       <Toaster position="top-center" />
     </UICtx.Provider>
   );
 }
 
-function NavTab({ to, icon, label, exact }: { to: "/" | "/lists" | "/templates"; icon: ReactNode; label: string; exact?: boolean }) {
+function NavTab({
+  to,
+  icon,
+  label,
+  exact,
+}: {
+  to: "/" | "/lists" | "/templates";
+  icon: ReactNode;
+  label: string;
+  exact?: boolean;
+}) {
   return (
     <Link
       to={to}
