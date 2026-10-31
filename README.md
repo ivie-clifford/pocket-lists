@@ -39,7 +39,7 @@ See [docs/development.md](docs/development.md) for setup, checks, deployment and
 
 Mobile and desktop must be considered together for every change. Phone-first prioritizes the phone experience; it does not defer desktop usability. Check touch, mouse and keyboard interactions; narrow and wide layouts; dialogs; scrolling; and data persistence before release.
 
-Known usability work includes clearer capture destinations, access to future loose tasks, Add/Edit panel completion, and the overlapping Create and quick-add controls.
+The latest usability changes add Upcoming and All task filters, clarify individual-task destinations, close Add after saving, provide Done for task edits, and move global Add into the header to avoid covering Create. These changed flows await focused phone and desktop acceptance checks.
 
 ## AI-assisted development
 
