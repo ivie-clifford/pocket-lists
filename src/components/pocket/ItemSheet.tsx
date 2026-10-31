@@ -13,7 +13,9 @@ import { useToday } from "./useToday";
 export const chip = (active: boolean) =>
   cn(
     "h-10 rounded-full border px-4 text-[15px] transition-colors",
-    active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground",
+    active
+      ? "border-primary bg-primary text-primary-foreground"
+      : "border-border bg-card text-foreground",
   );
 
 export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose: () => void }) {
@@ -35,7 +37,8 @@ export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose:
     if (!item) return;
     const t = text.trim();
     if (t && t !== item.text) updateItem(item.id, { text: t });
-    if ((note.trim() || undefined) !== item.note) updateItem(item.id, { note: note.trim() || undefined });
+    if ((note.trim() || undefined) !== item.note)
+      updateItem(item.id, { note: note.trim() || undefined });
   };
 
   const close = () => {
@@ -61,8 +64,18 @@ export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose:
       <DrawerContent>
         {item && (
           <div className="mx-auto w-full max-w-lg overflow-y-auto px-5 pt-3 pb-6">
-            <DrawerTitle className="sr-only">Edit task</DrawerTitle>
-            <DrawerDescription className="text-sm text-muted-foreground">{listName ?? "Loose task"}</DrawerDescription>
+            <div className="flex items-center justify-between gap-3">
+              <DrawerTitle className="font-serif text-2xl font-normal">Edit task</DrawerTitle>
+              <button
+                onClick={close}
+                className="h-11 rounded-full bg-primary px-5 text-primary-foreground"
+              >
+                Done
+              </button>
+            </div>
+            <DrawerDescription className="text-sm text-muted-foreground">
+              {listName ?? "No list"} · Changes save automatically
+            </DrawerDescription>
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -74,24 +87,52 @@ export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose:
 
             <Section label="Priority">
               {([undefined, 1, 2, 3] as (Priority | undefined)[]).map((p) => (
-                <button key={p ?? 0} className={chip(item.priority === p)} onClick={() => updateItem(item.id, { priority: p })}>
+                <button
+                  key={p ?? 0}
+                  className={chip(item.priority === p)}
+                  onClick={() => updateItem(item.id, { priority: p })}
+                >
                   {p ? `P${p}` : "None"}
                 </button>
               ))}
             </Section>
 
             <Section label="When">
-              <button className={chip(dueChoice === "none")} onClick={() => setDue({ due: undefined, dueKind: undefined })}>None</button>
-              <button className={chip(dueChoice === "today")} onClick={() => setDue({ due: today, dueKind: "day" })}>Today</button>
-              <button className={chip(dueChoice === "tomorrow")} onClick={() => setDue({ due: addDays(today, 1), dueKind: "day" })}>Tomorrow</button>
-              <button className={chip(dueChoice === "week")} onClick={() => setDue({ due: endOfWeek(today), dueKind: "week" })}>This week</button>
-              <label className={cn(chip(dueChoice === "date"), "relative inline-flex items-center")}>
+              <button
+                className={chip(dueChoice === "none")}
+                onClick={() => setDue({ due: undefined, dueKind: undefined })}
+              >
+                None
+              </button>
+              <button
+                className={chip(dueChoice === "today")}
+                onClick={() => setDue({ due: today, dueKind: "day" })}
+              >
+                Today
+              </button>
+              <button
+                className={chip(dueChoice === "tomorrow")}
+                onClick={() => setDue({ due: addDays(today, 1), dueKind: "day" })}
+              >
+                Tomorrow
+              </button>
+              <button
+                className={chip(dueChoice === "week")}
+                onClick={() => setDue({ due: endOfWeek(today), dueKind: "week" })}
+              >
+                This week
+              </button>
+              <label
+                className={cn(chip(dueChoice === "date"), "relative inline-flex items-center")}
+              >
                 {dueChoice === "date" && item.due ? item.due : "Pick date"}
                 <input
                   type="date"
                   className="absolute inset-0 opacity-0"
                   value={item.due ?? ""}
-                  onChange={(e) => e.target.value && setDue({ due: e.target.value, dueKind: "day" })}
+                  onChange={(e) =>
+                    e.target.value && setDue({ due: e.target.value, dueKind: "day" })
+                  }
                 />
               </label>
             </Section>
@@ -115,7 +156,12 @@ export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose:
                   onClick={() =>
                     downloadFile(
                       `${item.text.slice(0, 40).replace(/[^\w\- ]/g, "") || "task"}.ics`,
-                      buildIcs({ id: item.id, title: text.trim() || item.text, date: item.due!, note: note.trim() || undefined }),
+                      buildIcs({
+                        id: item.id,
+                        title: text.trim() || item.text,
+                        date: item.due!,
+                        note: note.trim() || undefined,
+                      }),
                       "text/calendar",
                     )
                   }
@@ -128,7 +174,10 @@ export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose:
                 onClick={() => {
                   const removed = deleteItem(item.id);
                   onClose();
-                  if (removed) toast("Task deleted", { action: { label: "Undo", onClick: () => restoreItem(removed) } });
+                  if (removed)
+                    toast("Task deleted", {
+                      action: { label: "Undo", onClick: () => restoreItem(removed) },
+                    });
                 }}
               >
                 <Trash2 className="h-5 w-5" /> Delete task
