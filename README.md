@@ -12,7 +12,7 @@ A calm, local-first checklist notebook for everyday tasks and reusable routines,
 
 ## Status
 
-Work in progress, not a verified v1 release. The owner reports that the core phone flows and all six desktop acceptance checks passed. Offline use and the apparent difference between browser and installed-app data remain unresolved; do not rely on offline availability yet.
+Work in progress, not a released v1. The owner reports that the core phone flows, all six desktop acceptance checks, and iPhone Home Screen offline reopening and task persistence checks passed. Offline checks followed the service-worker build repair in commit 7793239. Known usability work and public-release preparation remain.
 
 ## Features
 
