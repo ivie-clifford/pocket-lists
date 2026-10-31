@@ -5,9 +5,16 @@ import { cn } from "@/lib/utils";
 
 const Drawer = ({
   shouldScaleBackground = false,
+  repositionInputs = false,
+  handleOnly = true,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
-  <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
+  <DrawerPrimitive.Root
+    shouldScaleBackground={shouldScaleBackground}
+    repositionInputs={repositionInputs}
+    handleOnly={handleOnly}
+    {...props}
+  />
 );
 Drawer.displayName = "Drawer";
 
@@ -32,22 +39,47 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DrawerPortal>
-    <DrawerOverlay />
-    <DrawerPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col max-h-[92dvh] rounded-t-3xl border bg-background pb-safe",
-        className,
-      )}
-      {...props}
-    >
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
-      {children}
-    </DrawerPrimitive.Content>
-  </DrawerPortal>
-));
+>(({ className, children, style, ...props }, ref) => {
+  const [viewport, setViewport] = React.useState<{ height: number; top: number } | null>(null);
+  React.useEffect(() => {
+    const visible = window.visualViewport;
+    const update = () =>
+      setViewport({
+        height: visible?.height ?? window.innerHeight,
+        top: visible?.offsetTop ?? 0,
+      });
+    update();
+    visible?.addEventListener("resize", update);
+    visible?.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      visible?.removeEventListener("resize", update);
+      visible?.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+  return (
+    <DrawerPortal>
+      <DrawerOverlay />
+      <DrawerPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed inset-x-0 z-50 mx-auto flex min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border bg-background pb-safe sm:rounded-3xl",
+          className,
+        )}
+        style={{
+          top: viewport ? viewport.top + viewport.height * 0.04 : "4dvh",
+          height: viewport ? viewport.height * 0.92 : "92dvh",
+          ...style,
+        }}
+        {...props}
+      >
+        <DrawerPrimitive.Handle className="mx-auto mt-3 h-2 w-[100px] shrink-0 rounded-full bg-muted" />
+        {children}
+      </DrawerPrimitive.Content>
+    </DrawerPortal>
+  );
+});
 DrawerContent.displayName = "DrawerContent";
 
 const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
