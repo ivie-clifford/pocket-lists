@@ -52,7 +52,8 @@ function useIsDesktop() {
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, style, ...props }, ref) => {
+>(({ className, children, style, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
+  const returnFocus = React.useRef<HTMLElement | null>(null);
   const desktop = useIsDesktop();
   const [viewport, setViewport] = React.useState<{ height: number; top: number } | null>(null);
   React.useEffect(() => {
@@ -94,6 +95,25 @@ const DrawerContent = React.forwardRef<
               }
         }
         {...props}
+        onOpenAutoFocus={(event) => {
+          onOpenAutoFocus?.(event);
+          if (event.defaultPrevented) return;
+          returnFocus.current =
+            document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          // Enter the modal focus scope without opening the phone keyboard.
+          // Radix can then contain Tab/Shift+Tab and outside focus correctly.
+          event.preventDefault();
+          if (event.target instanceof HTMLElement) event.target.focus({ preventScroll: true });
+        }}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (!event.defaultPrevented && returnFocus.current?.isConnected) {
+            // These panels use controlled open state rather than DrawerTrigger.
+            event.preventDefault();
+            returnFocus.current.focus({ preventScroll: true });
+          }
+          returnFocus.current = null;
+        }}
       >
         {!desktop && (
           <DrawerPrimitive.Handle className="mx-auto mt-3 h-2 w-[100px] shrink-0 rounded-full bg-muted" />
