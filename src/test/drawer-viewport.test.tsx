@@ -1,13 +1,58 @@
 import { useState } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 
 const originalViewport = Object.getOwnPropertyDescriptor(window, "visualViewport");
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   if (originalViewport) Object.defineProperty(window, "visualViewport", originalViewport);
   else Reflect.deleteProperty(window, "visualViewport");
+});
+
+it("keeps a saved note visible after keyboard resize without moving its caret", async () => {
+  const viewport = Object.assign(new EventTarget(), { height: 800, offsetTop: 0 });
+  Object.defineProperty(window, "visualViewport", { configurable: true, value: viewport });
+  render(
+    <Drawer open>
+      <DrawerContent>
+        <DrawerTitle>Edit task</DrawerTitle>
+        <DrawerDescription>Task details</DrawerDescription>
+        <div data-testid="fields" style={{ overflowY: "auto" }}>
+          <textarea aria-label="Saved note" defaultValue="Keep my existing note" />
+        </div>
+      </DrawerContent>
+    </Drawer>,
+  );
+  const fields = screen.getByTestId("fields");
+  const note = screen.getByLabelText("Saved note") as HTMLTextAreaElement;
+  Object.defineProperties(fields, { scrollHeight: { value: 900 }, clientHeight: { value: 200 } });
+  let keyboardOpen = false;
+  vi.spyOn(fields, "getBoundingClientRect").mockImplementation(
+    () =>
+      ({ top: 100, bottom: keyboardOpen ? 300 : 700, height: keyboardOpen ? 200 : 600 }) as DOMRect,
+  );
+  vi.spyOn(note, "getBoundingClientRect").mockImplementation(
+    () => ({ top: 400 - fields.scrollTop, bottom: 500 - fields.scrollTop, height: 100 }) as DOMRect,
+  );
+  act(() => {
+    note.focus();
+    note.setSelectionRange(4, 4);
+  });
+  act(() => {
+    keyboardOpen = true;
+    viewport.height = 350;
+    viewport.dispatchEvent(new Event("resize"));
+  });
+  await waitFor(() => expect(fields.scrollTop).toBe(212));
+  expect(note).toHaveFocus();
+  expect(note.selectionStart).toBe(4);
+  expect(note.selectionEnd).toBe(4);
+  expect(note.value).toBe("Keep my existing note");
+  // Repeated viewport events must not keep moving a field that is already visible.
+  act(() => viewport.dispatchEvent(new Event("resize")));
+  expect(fields.scrollTop).toBe(212);
 });
 
 it("fits the visible viewport when a keyboard opens and preserves the focused field", () => {
