@@ -12,7 +12,7 @@ A calm, local-first checklist notebook for everyday tasks and reusable routines,
 
 ## Status
 
-Work in progress, not a released v1. The owner reports that the core phone flows, all six desktop acceptance checks, and iPhone Home Screen offline reopening and task persistence checks passed. Offline checks followed the service-worker build repair in commit 7793239. Known usability work and public-release preparation remain.
+Work in progress, not a released v1. The owner reports that the core phone flows, all six desktop acceptance checks, and iPhone Home Screen offline reopening and task persistence checks passed. Offline checks followed the service-worker build repair in commit 7793239. The latest fixes pass nine automated tests, TypeScript and the static production build. Desktop dialog saving, closing and keyboard focus were checked in the live app. The latest iPhone saved-note keyboard visibility fix still awaits a focused device retest; desktop visual design is provisional and will be revisited.
 
 ## Features
 
@@ -39,7 +39,7 @@ See [docs/development.md](docs/development.md) for setup, checks, deployment and
 
 Mobile and desktop must be considered together for every change. Phone-first prioritizes the phone experience; it does not defer desktop usability. Check touch, mouse and keyboard interactions; narrow and wide layouts; dialogs; scrolling; and data persistence before release.
 
-The latest usability changes add Upcoming and All task filters, clarify individual-task destinations, close Add after saving, provide Done for task edits, and move global Add into the header to avoid covering Create. These changed flows await focused phone and desktop acceptance checks.
+The app has Today / Upcoming / All task filters, explicit individual-task destinations, Add dismissal after saving, and Done for task edits. Phones use a sticky header and bottom navigation; wide desktops use a navigation rail and centered dialogs. Recent fixes preserve keyboard focus, phone field visibility and editor contents during closing. See Status above for the remaining verification limit.
 
 ## AI-assisted development
 
