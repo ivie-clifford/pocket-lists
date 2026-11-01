@@ -4,7 +4,7 @@ A calm, local-first checklist notebook for everyday tasks and reusable routines,
 
 ## Start here
 
-- **Use Pocket Lists:** [open the test app](https://pocket-lists.vercel.app/). No account is required.
+- **Use Pocket Lists:** [open the app](https://pocket-lists.vercel.app/). No account is required.
 - **Try a task:** add one for Today, then check its circle to complete it. Tap the task text to edit its date, priority or note, or to find Delete.
 - **Try a reusable list:** open Templates and choose Start list to make a working copy.
 - **Keep a backup:** use Settings to export your data. See [Your data](#your-data) before switching devices or browser contexts.
@@ -12,7 +12,7 @@ A calm, local-first checklist notebook for everyday tasks and reusable routines,
 
 ## Status
 
-Work in progress, not a released v1. The owner reports that the core phone flows, all six desktop acceptance checks, and iPhone Home Screen offline reopening and task persistence checks passed. Offline checks followed the service-worker build repair in commit 7793239. The latest fixes pass nine automated tests, TypeScript and the static production build. Desktop dialog saving, closing and keyboard focus were checked in the live app. The latest iPhone saved-note keyboard visibility fix still awaits a focused device retest; desktop visual design is provisional and will be revisited.
+Pocket Lists is under active development.
 
 ## Features
 
@@ -34,12 +34,6 @@ Generic starter templates are included. Your own saved lists are not part of thi
 ## Development
 
 See [docs/development.md](docs/development.md) for setup, checks, deployment and repository layout.
-
-## Design and release requirements
-
-Mobile and desktop must be considered together for every change. Phone-first prioritizes the phone experience; it does not defer desktop usability. Check touch, mouse and keyboard interactions; narrow and wide layouts; dialogs; scrolling; and data persistence before release.
-
-The app has Today / Upcoming / All task filters, explicit individual-task destinations, Add dismissal after saving, and Done for task edits. Phones use a sticky header and bottom navigation; wide desktops use a navigation rail and centered dialogs. Recent fixes preserve keyboard focus, phone field visibility and editor contents during closing. See Status above for the remaining verification limit.
 
 ## AI-assisted development
 
