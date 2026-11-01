@@ -21,20 +21,27 @@ export const chip = (active: boolean) =>
 export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose: () => void }) {
   const { items, lists, updateItem, deleteItem, restoreItem } = usePocket();
   const today = useToday();
-  const item = items.find((i) => i.id === itemId);
+  const selectedItem = items.find((i) => i.id === itemId);
+  const [closingItem, setClosingItem] = useState<PocketItem | null>(null);
+  // The dialog outlives selection during its exit animation. Retain its contents
+  // until that animation finishes so a content-sized desktop dialog cannot collapse.
+  const item = selectedItem ?? closingItem;
+  useEffect(() => {
+    if (selectedItem) setClosingItem(selectedItem);
+  }, [selectedItem]);
   const [text, setText] = useState("");
   const [note, setNote] = useState("");
 
   useEffect(() => {
-    if (item) {
-      setText(item.text);
-      setNote(item.note ?? "");
+    if (selectedItem) {
+      setText(selectedItem.text);
+      setNote(selectedItem.note ?? "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [itemId]);
 
   const saveText = () => {
-    if (!item) return;
+    if (!selectedItem || !item) return;
     const t = text.trim();
     if (t && t !== item.text) updateItem(item.id, { text: t });
     if ((note.trim() || undefined) !== item.note)
@@ -60,7 +67,13 @@ export function ItemSheet({ itemId, onClose }: { itemId: string | null; onClose:
           : "date";
 
   return (
-    <Drawer open={!!item} onOpenChange={(o) => !o && close()}>
+    <Drawer
+      open={!!selectedItem}
+      onOpenChange={(o) => !o && close()}
+      onAnimationEnd={(open) => {
+        if (!open && !selectedItem) setClosingItem(null);
+      }}
+    >
       <DrawerContent>
         {item && (
           <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
