@@ -54,8 +54,55 @@ const DrawerContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, style, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
   const returnFocus = React.useRef<HTMLElement | null>(null);
+  const panelRef = React.useRef<HTMLDivElement | null>(null);
+  const setPanelRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      panelRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
   const desktop = useIsDesktop();
   const [viewport, setViewport] = React.useState<{ height: number; top: number } | null>(null);
+  const keepFieldVisible = React.useCallback(() => {
+    const field = document.activeElement;
+    const panel = panelRef.current;
+    if (
+      desktop ||
+      !panel ||
+      !(field instanceof HTMLElement) ||
+      !panel.contains(field) ||
+      !field.matches("input, textarea, select")
+    )
+      return;
+    // Safari scrolls for focus before the keyboard finishes resizing the viewport.
+    // Correct only the panel's inner scroller after its new height is applied;
+    // never refocus the field, reset its caret, or scroll the background document.
+    for (
+      let parent = field.parentElement;
+      parent && parent !== panel;
+      parent = parent.parentElement
+    ) {
+      if (
+        !/auto|scroll/.test(getComputedStyle(parent).overflowY) ||
+        parent.scrollHeight <= parent.clientHeight
+      )
+        continue;
+      const bounds = parent.getBoundingClientRect();
+      const rect = field.getBoundingClientRect();
+      if (rect.top < bounds.top + 12 || rect.height > bounds.height - 24) {
+        parent.scrollTop += rect.top - bounds.top - 12;
+      } else if (rect.bottom > bounds.bottom - 12) {
+        parent.scrollTop += rect.bottom - bounds.bottom + 12;
+      }
+      break;
+    }
+  }, [desktop]);
+  React.useEffect(() => {
+    const frame = requestAnimationFrame(keepFieldVisible);
+    return () => cancelAnimationFrame(frame);
+  }, [viewport?.height, viewport?.top, keepFieldVisible]);
   React.useEffect(() => {
     const visible = window.visualViewport;
     const update = () =>
@@ -77,7 +124,7 @@ const DrawerContent = React.forwardRef<
     <DrawerPortal>
       <DrawerOverlay />
       <DrawerPrimitive.Content
-        ref={ref}
+        ref={setPanelRef}
         className={cn(
           "fixed z-50 flex min-h-0 w-full max-w-lg flex-col overflow-hidden border bg-background",
           desktop
@@ -95,6 +142,10 @@ const DrawerContent = React.forwardRef<
               }
         }
         {...props}
+        onFocusCapture={(event) => {
+          props.onFocusCapture?.(event);
+          requestAnimationFrame(keepFieldVisible);
+        }}
         onOpenAutoFocus={(event) => {
           onOpenAutoFocus?.(event);
           if (event.defaultPrevented) return;
