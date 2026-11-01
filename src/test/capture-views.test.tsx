@@ -21,7 +21,12 @@ vi.mock("@/lib/pocket/store", () => ({
 }));
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => vi.fn() }));
 vi.mock("@/components/ui/drawer", () => ({
-  Drawer: ({ open, children }: { children: ReactNode; open?: boolean }) => (open ? children : null),
+  // Keep the closing tree mounted as the real animated primitive does.
+  Drawer: ({ open, children }: { children: ReactNode; open?: boolean }) => (
+    <div data-testid="drawer" data-state={open ? "open" : "closed"} hidden={!open}>
+      {children}
+    </div>
+  ),
   DrawerContent: ({ children }: { children: ReactNode; open?: boolean }) => (
     <div role="dialog">{children}</div>
   ),
@@ -47,6 +52,21 @@ describe("capture completion", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add task" }));
     expect(actions.addItems).toHaveBeenCalledExactlyOnceWith([{ text: "Buy fruit", listId: null }]);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("retains edit contents while the closing dialog is still mounted", () => {
+    function Edit() {
+      const [id, setId] = useState<string | null>("task");
+      return <ItemSheet itemId={id} onClose={() => setId(null)} />;
+    }
+    render(<Edit />);
+    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "Keep this note" } });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(screen.getByTestId("drawer")).toHaveAttribute("data-state", "closed");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { hidden: true })).toHaveTextContent("Edit task");
+    expect(screen.getByLabelText("Note")).toHaveValue("Keep this note");
+    expect(actions.updateItem).toHaveBeenCalledWith("task", { note: "Keep this note" });
   });
 
   it("Done saves the focused task text and closes without requiring blur or swipe", () => {
