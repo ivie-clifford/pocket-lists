@@ -1,4 +1,5 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { useState } from "react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 
@@ -39,4 +40,42 @@ it("fits the visible viewport when a keyboard opens and preserves the focused fi
     viewport.dispatchEvent(new Event("resize"));
   });
   expect(panel.style.height).toBe("736px");
+});
+
+it("enters the modal without focusing an input, contains focus, and restores the opener", async () => {
+  function ControlledPanel() {
+    const [open, setOpen] = useState(false);
+    return (
+      <>
+        <button onClick={() => setOpen(true)}>Open editor</button>
+        <button>Background action</button>
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerContent>
+            <DrawerTitle>Edit task</DrawerTitle>
+            <DrawerDescription>Task details</DrawerDescription>
+            <textarea aria-label="Note" />
+            <button onClick={() => setOpen(false)}>Done</button>
+          </DrawerContent>
+        </Drawer>
+      </>
+    );
+  }
+  render(<ControlledPanel />);
+  const opener = screen.getByRole("button", { name: "Open editor" });
+  act(() => opener.focus());
+  fireEvent.click(opener);
+  const panel = screen.getByRole("dialog");
+  await waitFor(() => expect(panel).toHaveFocus());
+  expect(screen.getByLabelText("Note")).not.toHaveFocus();
+  const background = screen.getByRole("button", { name: "Background action", hidden: true });
+  act(() => background.focus());
+  expect(panel).toHaveFocus();
+  const note = screen.getByLabelText("Note");
+  act(() => note.focus());
+  expect(note).toHaveFocus();
+  act(() => background.focus());
+  expect(note).toHaveFocus();
+  fireEvent.click(screen.getByRole("button", { name: "Done" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  await waitFor(() => expect(opener).toHaveFocus());
 });
