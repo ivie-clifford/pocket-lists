@@ -30,7 +30,7 @@ function Shell({ children }: { children: ReactNode }) {
   return (
     <UICtx.Provider value={ui}>
       <div className="mx-auto flex min-h-dvh max-w-lg flex-col">
-        <header className="flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-1">
+        <header className="sticky top-0 z-40 flex shrink-0 items-center justify-between border-b border-border bg-background px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-3">
           <Link to="/" className="font-serif text-lg italic text-ink-soft">
             Pocket Lists
           </Link>
