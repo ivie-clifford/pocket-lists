@@ -36,10 +36,24 @@ const DrawerOverlay = React.forwardRef<
 ));
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
+function useIsDesktop() {
+  const [desktop, setDesktop] = React.useState(false);
+  React.useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mql = window.matchMedia("(min-width: 640px)");
+    const update = () => setDesktop(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+  return desktop;
+}
+
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, style, ...props }, ref) => {
+  const desktop = useIsDesktop();
   const [viewport, setViewport] = React.useState<{ height: number; top: number } | null>(null);
   React.useEffect(() => {
     const visible = window.visualViewport;
@@ -64,17 +78,26 @@ const DrawerContent = React.forwardRef<
       <DrawerPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed inset-x-0 z-50 mx-auto flex min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border bg-background pb-safe sm:rounded-3xl",
+          "fixed z-50 flex min-h-0 w-full max-w-lg flex-col overflow-hidden border bg-background",
+          desktop
+            ? "top-1/2 left-1/2 max-h-[85dvh] -translate-x-1/2 -translate-y-1/2 rounded-3xl shadow-xl"
+            : "inset-x-0 mx-auto rounded-t-3xl pb-safe",
           className,
         )}
-        style={{
-          top: viewport ? viewport.top + viewport.height * 0.04 : "4dvh",
-          height: viewport ? viewport.height * 0.92 : "92dvh",
-          ...style,
-        }}
+        style={
+          desktop
+            ? { ...style }
+            : {
+                top: viewport ? viewport.top + viewport.height * 0.04 : "4dvh",
+                height: viewport ? viewport.height * 0.92 : "92dvh",
+                ...style,
+              }
+        }
         {...props}
       >
-        <DrawerPrimitive.Handle className="mx-auto mt-3 h-2 w-[100px] shrink-0 rounded-full bg-muted" />
+        {!desktop && (
+          <DrawerPrimitive.Handle className="mx-auto mt-3 h-2 w-[100px] shrink-0 rounded-full bg-muted" />
+        )}
         {children}
       </DrawerPrimitive.Content>
     </DrawerPortal>
