@@ -36,10 +36,24 @@ const DrawerOverlay = React.forwardRef<
 ));
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
+function useIsDesktop() {
+  const [desktop, setDesktop] = React.useState(false);
+  React.useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mql = window.matchMedia("(min-width: 640px)");
+    const update = () => setDesktop(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+  return desktop;
+}
+
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, style, ...props }, ref) => {
+  const desktop = useIsDesktop();
   const [viewport, setViewport] = React.useState<{ height: number; top: number } | null>(null);
   React.useEffect(() => {
     const visible = window.visualViewport;

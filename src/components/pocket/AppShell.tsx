@@ -15,6 +15,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
+const CONTENT_W = "mx-auto w-full max-w-lg md:max-w-xl lg:max-w-2xl";
+
 function Shell({ children }: { children: ReactNode }) {
   const { ready } = usePocket();
   const [itemId, setItemId] = useState<string | null>(null);
@@ -29,31 +31,57 @@ function Shell({ children }: { children: ReactNode }) {
 
   return (
     <UICtx.Provider value={ui}>
-      <div className="mx-auto flex min-h-dvh max-w-lg flex-col">
-        <header className="sticky top-0 z-40 flex shrink-0 items-center justify-between border-b border-border bg-background px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-3">
-          <Link to="/" className="font-serif text-lg italic text-ink-soft">
-            Pocket Lists
-          </Link>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => ui.openQuickAdd()}
-              className="inline-flex h-11 items-center gap-1 rounded-full bg-primary px-4 text-primary-foreground"
-            >
-              <Plus className="h-4 w-4" /> Add
-            </button>
-            <Link
-              to="/settings"
-              aria-label="Settings"
-              className="-mr-2 grid h-11 w-11 place-items-center rounded-full text-ink-soft hover:bg-muted"
-            >
-              <Settings className="h-5 w-5" />
+      {/* Left rail: wide screens only */}
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border bg-background px-4 py-6 lg:flex">
+        <Link to="/" className="px-3 font-serif text-xl italic text-ink-soft">
+          Pocket Lists
+        </Link>
+        <button
+          onClick={() => ui.openQuickAdd()}
+          className="mt-6 inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-primary px-4 text-primary-foreground"
+        >
+          <Plus className="h-4 w-4" /> Add
+        </button>
+        <nav className="mt-6 flex flex-col gap-0.5" aria-label="Main">
+          <RailTab to="/" icon={<Sun className="h-5 w-5" />} label="Today" exact />
+          <RailTab to="/lists" icon={<LayoutList className="h-5 w-5" />} label="Lists" />
+          <RailTab to="/templates" icon={<Copy className="h-5 w-5" />} label="Templates" />
+        </nav>
+        <div className="mt-auto">
+          <RailTab to="/settings" icon={<Settings className="h-5 w-5" />} label="Settings" />
+        </div>
+      </aside>
+
+      <div className="flex min-h-dvh flex-col lg:pl-60">
+        <header className="sticky top-0 z-40 shrink-0 border-b border-border bg-background">
+          <div
+            className={`${CONTENT_W} flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-3`}
+          >
+            <Link to="/" className="font-serif text-lg italic text-ink-soft lg:hidden">
+              Pocket Lists
             </Link>
+            <span aria-hidden className="hidden lg:block" />
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => ui.openQuickAdd()}
+                className="inline-flex h-11 items-center gap-1 rounded-full bg-primary px-4 text-primary-foreground lg:hidden"
+              >
+                <Plus className="h-4 w-4" /> Add
+              </button>
+              <Link
+                to="/settings"
+                aria-label="Settings"
+                className="-mr-2 grid h-11 w-11 place-items-center rounded-full text-ink-soft hover:bg-muted lg:hidden"
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
+            </div>
           </div>
         </header>
-        <main className="flex-1 px-5 pb-36">{ready ? children : null}</main>
+        <main className={`${CONTENT_W} flex-1 px-5 pb-36 lg:pb-16`}>{ready ? children : null}</main>
       </div>
 
-      <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur">
+      <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-3">
           <NavTab to="/" icon={<Sun className="h-5 w-5" />} label="Today" exact />
           <NavTab to="/lists" icon={<LayoutList className="h-5 w-5" />} label="Lists" />
@@ -88,6 +116,29 @@ function NavTab({
       to={to}
       activeOptions={{ exact: !!exact }}
       className="flex h-16 flex-col items-center justify-center gap-0.5 text-[12px] text-muted-foreground data-[status=active]:text-primary"
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
+
+function RailTab({
+  to,
+  icon,
+  label,
+  exact,
+}: {
+  to: "/" | "/lists" | "/templates" | "/settings";
+  icon: ReactNode;
+  label: string;
+  exact?: boolean;
+}) {
+  return (
+    <Link
+      to={to}
+      activeOptions={{ exact: !!exact }}
+      className="flex h-11 items-center gap-3 rounded-full px-3 text-[15px] text-muted-foreground hover:bg-muted data-[status=active]:bg-accent data-[status=active]:font-medium data-[status=active]:text-accent-foreground"
     >
       {icon}
       {label}
