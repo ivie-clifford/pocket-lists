@@ -12,7 +12,7 @@ A calm, local-first checklist notebook for everyday tasks and reusable routines,
 
 ## Status
 
-Pocket Lists is under active development.
+[v0.1.0 — initial public release](https://github.com/ivie-clifford/pocket-lists/releases/tag/v0.1.0) is available. Pocket Lists remains under active development.
 
 ## Features
 
