@@ -68,7 +68,7 @@ function ListPage() {
 
   return (
     <section>
-      <Link to={isTemplate ? "/templates" : "/lists"} className="-ml-2 mt-2 inline-flex h-11 items-center gap-1 px-2 text-muted-foreground">
+      <Link to={isTemplate ? "/templates" : "/lists"} className="-ml-2 mt-2 inline-flex h-11 lg:hidden items-center gap-1 px-2 text-muted-foreground">
         <ArrowLeft className="h-4 w-4" /> {isTemplate ? "Templates" : "Lists"}
       </Link>
       {isTemplate && <div className="text-sm tracking-wide text-primary uppercase">Template</div>}

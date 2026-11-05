@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { ListsPane } from "./ListsPane";
 import { LayoutList, Plus, Settings, Sun, Copy } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { PocketProvider, usePocket } from "@/lib/pocket/store";
@@ -19,6 +20,8 @@ const CONTENT_W = "mx-auto w-full max-w-lg md:max-w-xl lg:max-w-2xl";
 
 function Shell({ children }: { children: ReactNode }) {
   const { ready } = usePocket();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const split = pathname.startsWith("/lists");
   const [itemId, setItemId] = useState<string | null>(null);
   const [qa, setQa] = useState<{ open: boolean; opts: QuickAddOpts }>({ open: false, opts: {} });
   const ui = useMemo(
@@ -52,7 +55,9 @@ function Shell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex min-h-dvh flex-col lg:pl-60">
+      {split && <ListsPane />}
+
+      <div className={`flex min-h-dvh flex-col ${split ? "lg:pl-[35rem]" : "lg:pl-60"}`}>
         <header className="sticky top-0 z-40 shrink-0 border-b border-border bg-background">
           <div
             className={`${CONTENT_W} flex items-center justify-between px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-3`}

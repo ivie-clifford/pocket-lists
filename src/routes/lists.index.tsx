@@ -46,7 +46,14 @@ function ListsPage() {
   const archived = lists.filter((l) => l.kind === "list" && l.archived);
 
   return (
-    <section>
+    <>
+    <div className="hidden pt-32 text-center lg:block">
+      <p className="font-serif text-2xl italic text-ink-soft">Pick a list on the left.</p>
+      <button onClick={() => openQuickAdd({ mode: "list" })} className="mt-6 h-11 rounded-full border border-border bg-card px-5">
+        New list
+      </button>
+    </div>
+    <section className="lg:hidden">
       <h1 className="mt-4 text-[2.5rem] leading-none">Lists</h1>
       <div className="mt-5">
         {active.map((l) => (
@@ -77,5 +84,6 @@ function ListsPage() {
         </div>
       )}
     </section>
+    </>
   );
 }
