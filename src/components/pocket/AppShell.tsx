@@ -19,9 +19,19 @@ export function AppShell({ children }: { children: ReactNode }) {
 const CONTENT_W = "mx-auto w-full max-w-lg md:max-w-xl lg:max-w-2xl";
 
 function Shell({ children }: { children: ReactNode }) {
-  const { ready } = usePocket();
+  const { ready, lists } = usePocket();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const split = pathname.startsWith("/lists");
+  const selectedId = pathname.match(/^\/lists\/([^/]+)\/?$/)?.[1];
+  const selected = lists.find((list) => list.id === selectedId);
+  const section =
+    pathname.startsWith("/templates") || selected?.kind === "template"
+      ? "/templates"
+      : pathname.startsWith("/lists")
+        ? "/lists"
+        : pathname.startsWith("/settings")
+          ? "/settings"
+          : "/";
+  const split = section === "/lists" || section === "/templates";
   const [itemId, setItemId] = useState<string | null>(null);
   const [qa, setQa] = useState<{ open: boolean; opts: QuickAddOpts }>({ open: false, opts: {} });
   const ui = useMemo(
@@ -46,16 +56,36 @@ function Shell({ children }: { children: ReactNode }) {
           <Plus className="h-4 w-4" /> Add
         </button>
         <nav className="mt-6 flex flex-col gap-0.5" aria-label="Main">
-          <RailTab to="/" icon={<Sun className="h-5 w-5" />} label="Today" exact />
-          <RailTab to="/lists" icon={<LayoutList className="h-5 w-5" />} label="Lists" />
-          <RailTab to="/templates" icon={<Copy className="h-5 w-5" />} label="Templates" />
+          <RailTab
+            selected={section === "/"}
+            to="/"
+            icon={<Sun className="h-5 w-5" />}
+            label="Today"
+          />
+          <RailTab
+            selected={section === "/lists"}
+            to="/lists"
+            icon={<LayoutList className="h-5 w-5" />}
+            label="Lists"
+          />
+          <RailTab
+            selected={section === "/templates"}
+            to="/templates"
+            icon={<Copy className="h-5 w-5" />}
+            label="Templates"
+          />
         </nav>
         <div className="mt-auto">
-          <RailTab to="/settings" icon={<Settings className="h-5 w-5" />} label="Settings" />
+          <RailTab
+            selected={section === "/settings"}
+            to="/settings"
+            icon={<Settings className="h-5 w-5" />}
+            label="Settings"
+          />
         </div>
       </aside>
 
-      {split && <ListsPane />}
+      {split && <ListsPane kind={section === "/templates" ? "template" : "list"} />}
 
       <div className={`flex min-h-dvh flex-col ${split ? "lg:pl-[35rem]" : "lg:pl-60"}`}>
         <header className="sticky top-0 z-40 shrink-0 border-b border-border bg-background">
@@ -88,9 +118,24 @@ function Shell({ children }: { children: ReactNode }) {
 
       <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-3">
-          <NavTab to="/" icon={<Sun className="h-5 w-5" />} label="Today" exact />
-          <NavTab to="/lists" icon={<LayoutList className="h-5 w-5" />} label="Lists" />
-          <NavTab to="/templates" icon={<Copy className="h-5 w-5" />} label="Templates" />
+          <NavTab
+            selected={section === "/"}
+            to="/"
+            icon={<Sun className="h-5 w-5" />}
+            label="Today"
+          />
+          <NavTab
+            selected={section === "/lists"}
+            to="/lists"
+            icon={<LayoutList className="h-5 w-5" />}
+            label="Lists"
+          />
+          <NavTab
+            selected={section === "/templates"}
+            to="/templates"
+            icon={<Copy className="h-5 w-5" />}
+            label="Templates"
+          />
         </div>
       </nav>
 
@@ -109,18 +154,21 @@ function NavTab({
   to,
   icon,
   label,
-  exact,
+  selected,
 }: {
   to: "/" | "/lists" | "/templates";
   icon: ReactNode;
   label: string;
-  exact?: boolean;
+  selected: boolean;
 }) {
   return (
     <Link
       to={to}
-      activeOptions={{ exact: !!exact }}
-      className="flex h-16 flex-col items-center justify-center gap-0.5 text-[12px] text-muted-foreground data-[status=active]:text-primary"
+      activeOptions={{ exact: true }}
+      activeProps={{ "aria-current": selected ? "page" : undefined }}
+      inactiveProps={{ "aria-current": selected ? "page" : undefined }}
+      data-current={selected ? "true" : undefined}
+      className="flex h-16 flex-col items-center justify-center gap-0.5 text-[12px] text-muted-foreground data-[current=true]:text-primary"
     >
       {icon}
       {label}
@@ -132,18 +180,21 @@ function RailTab({
   to,
   icon,
   label,
-  exact,
+  selected,
 }: {
   to: "/" | "/lists" | "/templates" | "/settings";
   icon: ReactNode;
   label: string;
-  exact?: boolean;
+  selected: boolean;
 }) {
   return (
     <Link
       to={to}
-      activeOptions={{ exact: !!exact }}
-      className="flex h-11 items-center gap-3 rounded-full px-3 text-[15px] text-muted-foreground hover:bg-muted data-[status=active]:bg-accent data-[status=active]:font-medium data-[status=active]:text-accent-foreground"
+      activeOptions={{ exact: true }}
+      activeProps={{ "aria-current": selected ? "page" : undefined }}
+      inactiveProps={{ "aria-current": selected ? "page" : undefined }}
+      data-current={selected ? "true" : undefined}
+      className="flex h-11 items-center gap-3 rounded-full px-3 text-[15px] text-muted-foreground hover:bg-muted data-[current=true]:bg-accent data-[current=true]:font-medium data-[current=true]:text-accent-foreground"
     >
       {icon}
       {label}

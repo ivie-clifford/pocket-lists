@@ -56,6 +56,7 @@ export function QuickAdd({
     }
   }, [open, opts]);
 
+  const creatingTemplate = opts.newTemplateTitle !== undefined;
   const activeLists = lists.filter((l) => l.kind === "list" && !l.archived);
   const templates = lists.filter((l) => l.kind === "template");
   const parsed = useMemo(() => parsePastedList(paste, today), [paste, today]);
@@ -83,12 +84,16 @@ export function QuickAdd({
   };
 
   const addPasted = () => {
-    if (!parsed.length) return;
+    if (target === "newtpl" && !newTitle.trim()) return;
+    if (!parsed.length && !creatingTemplate) return;
     if (targetIsTemplate) {
-      const listId =
-        target === "newtpl" ? createList(newTitle.trim() || "Pasted template", "template").id : target;
+      const listId = target === "newtpl" ? createList(newTitle.trim(), "template").id : target;
       addItems(toTemplateDrafts(parsed).map((p) => ({ ...p, listId })));
-      toast(`Added ${parsed.length} item${parsed.length > 1 ? "s" : ""} to template`);
+      toast(
+        creatingTemplate
+          ? "Template created"
+          : `Added ${parsed.length} item${parsed.length > 1 ? "s" : ""} to template`,
+      );
       onClose();
       navigate({ to: "/lists/$listId", params: { listId } });
       return;
@@ -112,7 +117,9 @@ export function QuickAdd({
       <DrawerContent>
         <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-3">
-            <DrawerTitle className="font-serif text-2xl font-normal">Add</DrawerTitle>
+            <DrawerTitle className="font-serif text-2xl font-normal">
+              {creatingTemplate ? "New template" : "Add"}
+            </DrawerTitle>
             <button onClick={onClose} className="h-11 rounded-full px-4 hover:bg-muted">
               Cancel
             </button>
@@ -121,26 +128,33 @@ export function QuickAdd({
             <DrawerDescription className="sr-only">
               Add a task, a list, or paste several items
             </DrawerDescription>
-            <div className="mt-3 grid grid-cols-3 rounded-full bg-muted p-1" role="tablist">
-              {(["task", "list", "paste"] as Mode[]).map((m) => (
-                <button
-                  key={m}
-                  role="tab"
-                  aria-selected={mode === m}
-                  onClick={() => {
-                    setMode(m);
-                    if (m !== "paste" && (target === "new" || target === "newtpl" || templates.some((t) => t.id === target)))
-                      setTarget("");
-                  }}
-                  className={cn(
-                    "h-10 rounded-full text-[15px] capitalize",
-                    mode === m ? "bg-card shadow-sm" : "text-muted-foreground",
-                  )}
-                >
-                  {m === "paste" ? "Paste a list" : m === "list" ? "New list" : "Task"}
-                </button>
-              ))}
-            </div>
+            {!creatingTemplate && (
+              <div className="mt-3 grid grid-cols-3 rounded-full bg-muted p-1" role="tablist">
+                {(["task", "list", "paste"] as Mode[]).map((m) => (
+                  <button
+                    key={m}
+                    role="tab"
+                    aria-selected={mode === m}
+                    onClick={() => {
+                      setMode(m);
+                      if (
+                        m !== "paste" &&
+                        (target === "new" ||
+                          target === "newtpl" ||
+                          templates.some((t) => t.id === target))
+                      )
+                        setTarget("");
+                    }}
+                    className={cn(
+                      "h-10 rounded-full text-[15px] capitalize",
+                      mode === m ? "bg-card shadow-sm" : "text-muted-foreground",
+                    )}
+                  >
+                    {m === "paste" ? "Paste a list" : m === "list" ? "New list" : "Task"}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {mode === "task" && (
               <form className="mt-4" onSubmit={(e) => (e.preventDefault(), addTask())}>
@@ -184,7 +198,25 @@ export function QuickAdd({
 
             {mode === "paste" && (
               <div className="mt-4">
+                {creatingTemplate && (
+                  <label className="block text-sm">
+                    Template name (required)
+                    <input
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      placeholder="e.g. Before I build"
+                      required
+                      className={cn(inputCls, "mt-2 mb-4 h-12 text-base")}
+                    />
+                  </label>
+                )}
+                {creatingTemplate && (
+                  <label htmlFor="template-items" className="mb-2 block text-sm">
+                    Items — type or paste, one per line (optional)
+                  </label>
+                )}
                 <textarea
+                  id={creatingTemplate ? "template-items" : undefined}
                   value={paste}
                   onChange={(e) => setPaste(e.target.value)}
                   rows={5}
@@ -193,14 +225,16 @@ export function QuickAdd({
                   }
                   className={cn(inputCls, "py-3 text-base")}
                 />
-                <TargetSelect
-                  value={target}
-                  onChange={setTarget}
-                  lists={activeLists}
-                  templates={templates}
-                  allowNew
-                />
-                {(target === "new" || target === "newtpl") && (
+                {!creatingTemplate && (
+                  <TargetSelect
+                    value={target}
+                    onChange={setTarget}
+                    lists={activeLists}
+                    templates={templates}
+                    allowNew
+                  />
+                )}
+                {!creatingTemplate && (target === "new" || target === "newtpl") && (
                   <input
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
@@ -210,7 +244,10 @@ export function QuickAdd({
                   />
                 )}
                 {targetIsTemplate && parsed.length > 0 && (
-                  <p role="note" className="mt-3 rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
+                  <p
+                    role="note"
+                    className="mt-3 rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground"
+                  >
                     {datesOmitted
                       ? "Templates stay undated, so the dates below will be left off. Nothing is added to Today."
                       : "Template items stay undated and won't appear in Today."}
@@ -230,7 +267,15 @@ export function QuickAdd({
                           {p.due &&
                             (() => {
                               const label = dueLabel(
-                                { ...p, id: "", listId: null, done: false, order: 0, createdAt: "", updatedAt: "" },
+                                {
+                                  ...p,
+                                  id: "",
+                                  listId: null,
+                                  done: false,
+                                  order: 0,
+                                  createdAt: "",
+                                  updatedAt: "",
+                                },
                                 today,
                               );
                               return targetIsTemplate ? (
@@ -250,16 +295,23 @@ export function QuickAdd({
           <div className="shrink-0 border-t border-border bg-background px-5 py-3">
             <button
               onClick={mode === "task" ? addTask : mode === "list" ? addList : addPasted}
-              disabled={mode === "paste" ? !parsed.length : !text.trim()}
+              disabled={
+                mode === "paste"
+                  ? (target === "newtpl" && !newTitle.trim()) ||
+                    (!creatingTemplate && !parsed.length)
+                  : !text.trim()
+              }
               className="w-full rounded-2xl bg-primary py-3 text-lg text-primary-foreground disabled:opacity-50"
             >
-              {mode === "task"
-                ? "Add task"
-                : mode === "list"
-                  ? "Create list"
-                  : parsed.length
-                    ? `Add ${parsed.length} item${parsed.length > 1 ? "s" : ""}`
-                    : "Add items"}
+              {creatingTemplate || (mode === "paste" && target === "newtpl")
+                ? "Create template"
+                : mode === "task"
+                  ? "Add task"
+                  : mode === "list"
+                    ? "Create list"
+                    : parsed.length
+                      ? `Add ${parsed.length} item${parsed.length > 1 ? "s" : ""}`
+                      : "Add items"}
             </button>
           </div>
         </div>

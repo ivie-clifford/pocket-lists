@@ -1,6 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Archive, ArchiveRestore, ClipboardPaste, Copy, MoreHorizontal, Play, Plus, RotateCcw, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Archive,
+  ArchiveRestore,
+  ClipboardPaste,
+  Copy,
+  MoreHorizontal,
+  Play,
+  Plus,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { usePocket } from "@/lib/pocket/store";
 import { SortableItems } from "@/components/pocket/SortableItems";
@@ -28,7 +39,10 @@ export const Route = createFileRoute("/lists/$listId")({
       { title: "List — Pocket Lists" },
       { name: "description", content: "Check off, add, reorder and reset items on this list." },
       { property: "og:title", content: "List — Pocket Lists" },
-      { property: "og:description", content: "Check off, add, reorder and reset items on this list." },
+      {
+        property: "og:description",
+        content: "Check off, add, reorder and reset items on this list.",
+      },
     ],
   }),
   component: ListPage,
@@ -71,14 +85,27 @@ function ListPage() {
     const t = title.trim();
     if (t && t !== list.title) updateList(list.id, { title: t });
     else if (!t) setTitle(list.title);
-    if ((note.trim() || undefined) !== list.note) updateList(list.id, { note: note.trim() || undefined });
+    if ((note.trim() || undefined) !== list.note)
+      updateList(list.id, { note: note.trim() || undefined });
   };
 
-  const action = "flex h-11 items-center gap-2 rounded-full border border-border bg-card px-4 text-[15px]";
+  const startList = () => {
+    const copy = duplicateList(list.id, "list");
+    if (copy) {
+      toast(`Created “${copy.title}”`);
+      navigate({ to: "/lists/$listId", params: { listId: copy.id } });
+    }
+  };
+
+  const action =
+    "flex h-11 items-center gap-2 rounded-full border border-border bg-card px-4 text-[15px]";
 
   return (
     <section>
-      <Link to={isTemplate ? "/templates" : "/lists"} className="-ml-2 mt-2 inline-flex h-11 lg:hidden items-center gap-1 px-2 text-muted-foreground">
+      <Link
+        to={isTemplate ? "/templates" : "/lists"}
+        className="-ml-2 mt-2 inline-flex h-11 lg:hidden items-center gap-1 px-2 text-muted-foreground"
+      >
         <ArrowLeft className="h-4 w-4" /> {isTemplate ? "Templates" : "Lists"}
       </Link>
       {isTemplate && <div className="text-sm tracking-wide text-primary uppercase">Template</div>}
@@ -98,6 +125,14 @@ function ListPage() {
             <MoreHorizontal className="h-5 w-5" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-[12rem]">
+            {isTemplate && (
+              <>
+                <DropdownMenuItem className="min-h-11 gap-2 text-[15px]" onSelect={startList}>
+                  <Play className="h-4 w-4" /> Create list from template
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             {!isTemplate && (
               <>
                 <DropdownMenuItem
@@ -121,7 +156,11 @@ function ListPage() {
                     if (!list.archived) navigate({ to: "/lists" });
                   }}
                 >
-                  {list.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                  {list.archived ? (
+                    <ArchiveRestore className="h-4 w-4" />
+                  ) : (
+                    <Archive className="h-4 w-4" />
+                  )}
                   {list.archived ? "Unarchive" : "Archive"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -147,10 +186,21 @@ function ListPage() {
       />
       {!isTemplate && mine.length > 0 && (
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
-          <div className="h-full bg-primary transition-all duration-500" style={{ width: `${(done / mine.length) * 100}%` }} />
+          <div
+            className="h-full bg-primary transition-all duration-500"
+            style={{ width: `${(done / mine.length) * 100}%` }}
+          />
         </div>
       )}
 
+      {isTemplate && (
+        <button
+          className="mt-3 flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 py-2 text-primary-foreground"
+          onClick={startList}
+        >
+          <Play className="h-4 w-4 shrink-0" /> Create list from template
+        </button>
+      )}
       <div className="mt-3 flex flex-wrap gap-2">
         <button className={action} onClick={() => addRef.current?.focus()}>
           <Plus className="h-4 w-4" /> Add item
@@ -184,27 +234,12 @@ function ListPage() {
         />
       </form>
 
-      {isTemplate && (
-        <div className="mt-8 flex flex-wrap gap-2">
-          <button
-            className="flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-primary-foreground"
-            onClick={() => {
-              const l = duplicateList(list.id, "list");
-              if (l) {
-                toast(`Started “${l.title}”`);
-                navigate({ to: "/lists/$listId", params: { listId: l.id } });
-              }
-            }}
-          >
-            <Play className="h-4 w-4" /> Start list
-          </button>
-        </div>
-      )}
-
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogTitle>Delete “{list.title}”?</AlertDialogTitle>
-          <AlertDialogDescription>This removes the {isTemplate ? "template" : "list"} and its {mine.length} items.</AlertDialogDescription>
+          <AlertDialogDescription>
+            This removes the {isTemplate ? "template" : "list"} and its {mine.length} items.
+          </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep it</AlertDialogCancel>
             <AlertDialogAction
