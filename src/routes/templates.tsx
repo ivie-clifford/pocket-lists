@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { usePocket } from "@/lib/pocket/store";
+import { useUI } from "@/components/pocket/ui-state";
 import { ListLink } from "./lists.index";
 
 export const Route = createFileRoute("/templates")({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/templates")({
 function TemplatesPage() {
   const { lists, createList } = usePocket();
   const navigate = useNavigate();
+  const { openQuickAdd } = useUI();
   const [title, setTitle] = useState("");
   const templates = lists.filter((l) => l.kind === "template").sort((a, b) => a.order - b.order);
 
@@ -58,6 +60,13 @@ function TemplatesPage() {
           Create
         </button>
       </form>
+      <button
+        type="button"
+        onClick={() => openQuickAdd({ newTemplateTitle: title.trim() })}
+        className="mt-3 h-11 rounded-full border border-border bg-card px-5 text-[15px]"
+      >
+        Create from pasted items
+      </button>
     </section>
   );
 }

@@ -13,6 +13,13 @@ type Mode = "task" | "list" | "paste";
 export interface QuickAddOpts {
   listId?: string;
   mode?: Mode;
+  /** Open Paste with "A new template" preselected and this name filled in. */
+  newTemplateTitle?: string;
+}
+
+/** Items pasted into a template are undated blueprints. */
+export function toTemplateDrafts<T extends { due?: string; dueKind?: unknown }>(lines: T[]) {
+  return lines.map(({ due: _d, dueKind: _k, ...rest }) => rest);
 }
 
 const inputCls =
@@ -39,12 +46,13 @@ export function QuickAdd({
 
   useEffect(() => {
     if (open) {
-      setMode(opts.mode ?? "task");
-      setTarget(opts.listId ?? "");
+      const isNewTpl = opts.newTemplateTitle !== undefined;
+      setMode(isNewTpl ? "paste" : (opts.mode ?? "task"));
+      setTarget(isNewTpl ? "newtpl" : (opts.listId ?? ""));
       setWhen(opts.listId ? "none" : "today");
       setText("");
       setPaste("");
-      setNewTitle("");
+      setNewTitle(opts.newTemplateTitle ?? "");
     }
   }, [open, opts]);
 
@@ -52,6 +60,9 @@ export function QuickAdd({
   const templates = lists.filter((l) => l.kind === "template");
   const parsed = useMemo(() => parsePastedList(paste, today), [paste, today]);
   const targetName = target ? lists.find((l) => l.id === target)?.title : "No list";
+  const targetIsTemplate =
+    target === "newtpl" || lists.find((l) => l.id === target)?.kind === "template";
+  const datesOmitted = targetIsTemplate && parsed.some((p) => p.due);
 
   const addTask = () => {
     const t = text.trim();
@@ -73,6 +84,15 @@ export function QuickAdd({
 
   const addPasted = () => {
     if (!parsed.length) return;
+    if (targetIsTemplate) {
+      const listId =
+        target === "newtpl" ? createList(newTitle.trim() || "Pasted template", "template").id : target;
+      addItems(toTemplateDrafts(parsed).map((p) => ({ ...p, listId })));
+      toast(`Added ${parsed.length} item${parsed.length > 1 ? "s" : ""} to template`);
+      onClose();
+      navigate({ to: "/lists/$listId", params: { listId } });
+      return;
+    }
     let listId: string | null = target && target !== "new" ? target : null;
     if (target === "new") listId = createList(newTitle.trim() || "Pasted list").id;
     addItems(
@@ -109,7 +129,8 @@ export function QuickAdd({
                   aria-selected={mode === m}
                   onClick={() => {
                     setMode(m);
-                    if (m !== "paste" && target === "new") setTarget("");
+                    if (m !== "paste" && (target === "new" || target === "newtpl" || templates.some((t) => t.id === target)))
+                      setTarget("");
                   }}
                   className={cn(
                     "h-10 rounded-full text-[15px] capitalize",
@@ -172,14 +193,28 @@ export function QuickAdd({
                   }
                   className={cn(inputCls, "py-3 text-base")}
                 />
-                <TargetSelect value={target} onChange={setTarget} lists={activeLists} allowNew />
-                {target === "new" && (
+                <TargetSelect
+                  value={target}
+                  onChange={setTarget}
+                  lists={activeLists}
+                  templates={templates}
+                  allowNew
+                />
+                {(target === "new" || target === "newtpl") && (
                   <input
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="New list name"
+                    aria-label={target === "newtpl" ? "New template name" : "New list name"}
+                    placeholder={target === "newtpl" ? "New template name" : "New list name"}
                     className={cn(inputCls, "mt-2 h-12 text-base")}
                   />
+                )}
+                {targetIsTemplate && parsed.length > 0 && (
+                  <p role="note" className="mt-3 rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
+                    {datesOmitted
+                      ? "Templates stay undated, so the dates below will be left off. Nothing is added to Today."
+                      : "Template items stay undated and won't appear in Today."}
+                  </p>
                 )}
                 {parsed.length > 0 && (
                   <ul className="mt-4 max-h-56 overflow-y-auto rounded-2xl border border-border bg-card px-4">
@@ -190,24 +225,20 @@ export function QuickAdd({
                       >
                         <span>{p.text}</span>
                         <span className="shrink-0 text-[13px] text-muted-foreground">
-                          {[
-                            p.priority && `P${p.priority}`,
-                            p.due &&
-                              dueLabel(
-                                {
-                                  ...p,
-                                  id: "",
-                                  listId: null,
-                                  done: false,
-                                  order: 0,
-                                  createdAt: "",
-                                  updatedAt: "",
-                                },
+                          {p.priority ? `P${p.priority}` : null}
+                          {p.priority && p.due ? " · " : null}
+                          {p.due &&
+                            (() => {
+                              const label = dueLabel(
+                                { ...p, id: "", listId: null, done: false, order: 0, createdAt: "", updatedAt: "" },
                                 today,
-                              ),
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
+                              );
+                              return targetIsTemplate ? (
+                                <s aria-label={`${label} (will be omitted)`}>{label}</s>
+                              ) : (
+                                label
+                              );
+                            })()}
                         </span>
                       </li>
                     ))}
@@ -242,11 +273,13 @@ function TargetSelect({
   onChange,
   lists,
   allowNew,
+  templates,
 }: {
   value: string;
   onChange: (v: string) => void;
   lists: { id: string; title: string }[];
   allowNew?: boolean;
+  templates?: { id: string; title: string }[];
 }) {
   return (
     <label className="mt-3 flex items-center gap-3 text-[15px] text-muted-foreground">
@@ -263,6 +296,16 @@ function TargetSelect({
           </option>
         ))}
         {allowNew && <option value="new">A new list…</option>}
+        {templates && (
+          <optgroup label="Templates (undated)">
+            {templates.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.title}
+              </option>
+            ))}
+            {allowNew && <option value="newtpl">A new template…</option>}
+          </optgroup>
+        )}
       </select>
     </label>
   );

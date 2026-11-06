@@ -1,9 +1,17 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Archive, ArchiveRestore, Copy, Play, RotateCcw, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Archive, ArchiveRestore, ClipboardPaste, Copy, MoreHorizontal, Play, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePocket } from "@/lib/pocket/store";
 import { SortableItems } from "@/components/pocket/SortableItems";
+import { useUI } from "@/components/pocket/ui-state";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +43,8 @@ function ListPage() {
   const [note, setNote] = useState(list?.note ?? "");
   const [newItem, setNewItem] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const { openQuickAdd } = useUI();
+  const addRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTitle(list?.title ?? "");
@@ -72,13 +82,60 @@ function ListPage() {
         <ArrowLeft className="h-4 w-4" /> {isTemplate ? "Templates" : "Lists"}
       </Link>
       {isTemplate && <div className="text-sm tracking-wide text-primary uppercase">Template</div>}
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        onBlur={saveMeta}
-        aria-label="List name"
-        className="w-full bg-transparent font-serif text-[2.25rem] leading-tight outline-none"
-      />
+      <div className="flex items-start gap-2">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onBlur={saveMeta}
+          aria-label="List name"
+          className="min-w-0 flex-1 bg-transparent font-serif text-[2.25rem] leading-tight outline-none"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            aria-label={`More actions for ${list.title}`}
+            className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-muted"
+          >
+            <MoreHorizontal className="h-5 w-5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[12rem]">
+            {!isTemplate && (
+              <>
+                <DropdownMenuItem
+                  className="h-11 gap-2 text-[15px]"
+                  disabled={!done}
+                  onSelect={() => (resetList(list.id), toast("List reset"))}
+                >
+                  <RotateCcw className="h-4 w-4" /> Reset
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="h-11 gap-2 text-[15px]"
+                  onSelect={() => (duplicateList(list.id, "template"), toast("Saved as template"))}
+                >
+                  <Copy className="h-4 w-4" /> Save as template
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="h-11 gap-2 text-[15px]"
+                  onSelect={() => {
+                    updateList(list.id, { archived: !list.archived });
+                    toast(list.archived ? "List restored" : "List archived");
+                    if (!list.archived) navigate({ to: "/lists" });
+                  }}
+                >
+                  {list.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                  {list.archived ? "Unarchive" : "Archive"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem
+              className="h-11 gap-2 text-[15px] text-destructive focus:text-destructive"
+              onSelect={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-4 w-4" /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       <textarea
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -94,6 +151,15 @@ function ListPage() {
         </div>
       )}
 
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button className={action} onClick={() => addRef.current?.focus()}>
+          <Plus className="h-4 w-4" /> Add item
+        </button>
+        <button className={action} onClick={() => openQuickAdd({ mode: "paste", listId: list.id })}>
+          <ClipboardPaste className="h-4 w-4" /> Paste items
+        </button>
+      </div>
+
       <div className="mt-4">
         <SortableItems listId={list.id} items={mine} />
       </div>
@@ -108,6 +174,8 @@ function ListPage() {
         }}
       >
         <input
+          ref={addRef}
+          aria-label="Add an item"
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
           placeholder="+ Add an item"
@@ -116,8 +184,8 @@ function ListPage() {
         />
       </form>
 
-      <div className="mt-8 flex flex-wrap gap-2">
-        {isTemplate ? (
+      {isTemplate && (
+        <div className="mt-8 flex flex-wrap gap-2">
           <button
             className="flex h-11 items-center gap-2 rounded-full bg-primary px-5 text-primary-foreground"
             onClick={() => {
@@ -130,31 +198,8 @@ function ListPage() {
           >
             <Play className="h-4 w-4" /> Start list
           </button>
-        ) : (
-          <>
-            <button className={action} onClick={() => (resetList(list.id), toast("List reset"))} disabled={!done}>
-              <RotateCcw className="h-4 w-4" /> Reset
-            </button>
-            <button className={action} onClick={() => (duplicateList(list.id, "template"), toast("Saved as template"))}>
-              <Copy className="h-4 w-4" /> Save as template
-            </button>
-            <button
-              className={action}
-              onClick={() => {
-                updateList(list.id, { archived: !list.archived });
-                toast(list.archived ? "List restored" : "List archived");
-                if (!list.archived) navigate({ to: "/lists" });
-              }}
-            >
-              {list.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
-              {list.archived ? "Unarchive" : "Archive"}
-            </button>
-          </>
-        )}
-        <button className={`${action} text-destructive`} onClick={() => setConfirmDelete(true)}>
-          <Trash2 className="h-4 w-4" /> Delete
-        </button>
-      </div>
+        </div>
+      )}
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
