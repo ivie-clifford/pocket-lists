@@ -115,7 +115,7 @@ export function QuickAdd({
 
   return (
     <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
-      <DrawerContent>
+      <DrawerContent className="overflow-clip">
         <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-3">
             <DrawerTitle className="font-serif text-2xl font-normal">
