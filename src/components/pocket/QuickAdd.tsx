@@ -9,11 +9,11 @@ import { cn } from "@/lib/utils";
 import { chip } from "./ItemSheet";
 import { useToday } from "./useToday";
 
-type Mode = "task" | "list" | "paste";
+type Mode = "task" | "list" | "template" | "paste";
 export interface QuickAddOpts {
   listId?: string;
   mode?: Mode;
-  /** Open Paste with "A new template" preselected and this name filled in. */
+  /** Open the named-template flow with this name filled in. */
   newTemplateTitle?: string;
 }
 
@@ -46,8 +46,8 @@ export function QuickAdd({
 
   useEffect(() => {
     if (open) {
-      const isNewTpl = opts.newTemplateTitle !== undefined;
-      setMode(isNewTpl ? "paste" : (opts.mode ?? "task"));
+      const isNewTpl = opts.newTemplateTitle !== undefined || opts.mode === "template";
+      setMode(isNewTpl ? "template" : (opts.mode ?? "task"));
       setTarget(isNewTpl ? "newtpl" : (opts.listId ?? ""));
       setWhen(opts.listId ? "none" : "today");
       setText("");
@@ -56,7 +56,8 @@ export function QuickAdd({
     }
   }, [open, opts]);
 
-  const creatingTemplate = opts.newTemplateTitle !== undefined;
+  const creatingTemplate = mode === "template";
+  const dedicatedTemplate = opts.newTemplateTitle !== undefined;
   const activeLists = lists.filter((l) => l.kind === "list" && !l.archived);
   const templates = lists.filter((l) => l.kind === "template");
   const parsed = useMemo(() => parsePastedList(paste, today), [paste, today]);
@@ -126,18 +127,23 @@ export function QuickAdd({
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-3 pb-6">
             <DrawerDescription className="sr-only">
-              Add a task, a list, or paste several items
+              Add a task, list or reusable template, or paste several items
             </DrawerDescription>
-            {!creatingTemplate && (
-              <div className="mt-3 grid grid-cols-3 rounded-full bg-muted p-1" role="tablist">
-                {(["task", "list", "paste"] as Mode[]).map((m) => (
+            {!dedicatedTemplate && (
+              <div
+                className="mt-3 grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1 sm:grid-cols-4"
+                role="group"
+                aria-label="Add type"
+              >
+                {(["task", "list", "template", "paste"] as Mode[]).map((m) => (
                   <button
                     key={m}
-                    role="tab"
-                    aria-selected={mode === m}
+                    type="button"
+                    aria-pressed={mode === m}
                     onClick={() => {
                       setMode(m);
-                      if (
+                      if (m === "template") setTarget("newtpl");
+                      else if (
                         m !== "paste" &&
                         (target === "new" ||
                           target === "newtpl" ||
@@ -150,7 +156,13 @@ export function QuickAdd({
                       mode === m ? "bg-card shadow-sm" : "text-muted-foreground",
                     )}
                   >
-                    {m === "paste" ? "Paste a list" : m === "list" ? "New list" : "Task"}
+                    {m === "paste"
+                      ? "Paste a list"
+                      : m === "list"
+                        ? "List"
+                        : m === "template"
+                          ? "Template"
+                          : "Task"}
                   </button>
                 ))}
               </div>
@@ -196,7 +208,7 @@ export function QuickAdd({
               </form>
             )}
 
-            {mode === "paste" && (
+            {(mode === "paste" || creatingTemplate) && (
               <div className="mt-4">
                 {creatingTemplate && (
                   <label className="block text-sm">
@@ -296,7 +308,7 @@ export function QuickAdd({
             <button
               onClick={mode === "task" ? addTask : mode === "list" ? addList : addPasted}
               disabled={
-                mode === "paste"
+                mode === "paste" || creatingTemplate
                   ? (target === "newtpl" && !newTitle.trim()) ||
                     (!creatingTemplate && !parsed.length)
                   : !text.trim()

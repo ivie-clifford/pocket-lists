@@ -142,6 +142,82 @@ describe("template usability", () => {
     expect(env.write).not.toHaveBeenCalled();
   });
 
+  it.each([0, 1])(
+    "creates a template through global Add entry %s and retains its draft",
+    async (entry) => {
+      render(
+        <AppShell>
+          <Templates />
+          <DataProbe />
+        </AppShell>,
+      );
+      await screen.findByRole("heading", { name: "Templates" });
+      fireEvent.click(screen.getAllByRole("button", { name: "Add" })[entry]!);
+      const dialog = within(screen.getByRole("dialog"));
+      const choices = within(dialog.getByRole("group", { name: "Add type" }));
+      expect(choices.getAllByRole("button").map((button) => button.textContent)).toEqual([
+        "Task",
+        "List",
+        "Template",
+        "Paste a list",
+      ]);
+      fireEvent.click(choices.getByRole("button", { name: "Template" }));
+      expect(dialog.getByRole("button", { name: "Create template" })).toBeDisabled();
+      fireEvent.change(dialog.getByLabelText("Template name (required)"), {
+        target: { value: "Global template" },
+      });
+      fireEvent.change(dialog.getByLabelText(/Items — type or paste/), {
+        target: { value: "P1 | Pack bag | Today\nPassport" },
+      });
+      fireEvent.click(choices.getByRole("button", { name: "List" }));
+      fireEvent.click(choices.getByRole("button", { name: "Template" }));
+      expect(dialog.getByLabelText("Template name (required)")).toHaveValue("Global template");
+      expect(dialog.getByLabelText(/Items — type or paste/)).toHaveValue(
+        "P1 | Pack bag | Today\nPassport",
+      );
+      fireEvent.click(dialog.getByRole("button", { name: "Create template" }));
+      const data: PocketData = JSON.parse(screen.getByTestId("data").textContent!);
+      const template = data.lists.find((list) => list.title === "Global template")!;
+      expect(template.kind).toBe("template");
+      expect(
+        data.items
+          .filter((item) => item.listId === template.id)
+          .map((item) => ({ text: item.text, due: item.due })),
+      ).toEqual([
+        { text: "Pack bag", due: undefined },
+        { text: "Passport", due: undefined },
+      ]);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    },
+  );
+
+  it("keeps task capture independent after switching away from a template draft", async () => {
+    render(
+      <AppShell>
+        <Templates />
+        <DataProbe />
+      </AppShell>,
+    );
+    await screen.findByRole("heading", { name: "Templates" });
+    fireEvent.click(screen.getAllByRole("button", { name: "Add" }).at(-1)!);
+    const dialog = within(screen.getByRole("dialog"));
+    const choices = within(dialog.getByRole("group", { name: "Add type" }));
+    fireEvent.click(choices.getByRole("button", { name: "Template" }));
+    fireEvent.change(dialog.getByLabelText("Template name (required)"), {
+      target: { value: "Unsaved draft" },
+    });
+    fireEvent.click(choices.getByRole("button", { name: "Task" }));
+    expect(dialog.getByRole("combobox")).toHaveValue("");
+    fireEvent.change(dialog.getByPlaceholderText("What needs doing?"), {
+      target: { value: "Loose task" },
+    });
+    fireEvent.click(dialog.getByRole("button", { name: "Add task" }));
+    const data: PocketData = JSON.parse(screen.getByTestId("data").textContent!);
+    expect(data.lists).toHaveLength(2);
+    expect(data.items.find((item) => item.text === "Loose task")).toMatchObject({ listId: null });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it.each([
     ["/", "tpl", "Today", null],
     ["/templates", "tpl", "Templates", "Packing template"],

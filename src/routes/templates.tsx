@@ -35,7 +35,7 @@ function TemplatesPage() {
       <button
         type="button"
         onClick={() => openQuickAdd({ newTemplateTitle: "" })}
-        className="mt-4 h-11 rounded-full bg-primary px-5 text-primary-foreground"
+        className="mt-4 hidden h-11 items-center rounded-full bg-primary px-5 text-primary-foreground lg:inline-flex"
       >
         New template
       </button>
