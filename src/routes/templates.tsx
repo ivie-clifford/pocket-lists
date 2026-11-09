@@ -28,17 +28,19 @@ function TemplatesPage() {
 
   return (
     <section>
-      <h1 className="mt-4 text-[2.5rem] leading-none">Templates</h1>
-      <p className="mt-2 text-muted-foreground">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-[2rem] leading-none sm:text-[2.5rem]">Templates</h1>
+        <button
+          type="button"
+          onClick={() => openQuickAdd({ newTemplateTitle: "" })}
+          className="h-11 rounded-full border border-border bg-card px-3 text-sm"
+        >
+          New template
+        </button>
+      </div>
+      <p className="mt-3 text-muted-foreground">
         Reusable checklists. Create a fresh list whenever you need one.
       </p>
-      <button
-        type="button"
-        onClick={() => openQuickAdd({ newTemplateTitle: "" })}
-        className="mt-4 hidden h-11 items-center rounded-full bg-primary px-5 text-primary-foreground lg:inline-flex"
-      >
-        New template
-      </button>
       <div className="mt-5">
         {templates.map((l) => (
           <ListLink key={l.id} list={l} />

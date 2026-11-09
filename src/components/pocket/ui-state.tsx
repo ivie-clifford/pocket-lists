@@ -4,7 +4,7 @@ export interface UIState {
   openItem: (id: string) => void;
   openQuickAdd: (opts?: {
     listId?: string;
-    mode?: "task" | "list" | "paste";
+    mode?: "task" | "list" | "template" | "paste";
     newTemplateTitle?: string;
   }) => void;
 }

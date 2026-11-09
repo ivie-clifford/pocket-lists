@@ -5,6 +5,7 @@ import { AppShell } from "@/components/pocket/AppShell";
 import { Route as TemplatesRoute } from "@/routes/templates";
 import { Route as ListRoute } from "@/routes/lists.$listId";
 import { usePocket } from "@/lib/pocket/store";
+import { useUI } from "@/components/pocket/ui-state";
 import type { PocketData, PocketList, PocketItem } from "@/lib/pocket/types";
 type MockLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   to: string;
@@ -159,7 +160,6 @@ describe("template usability", () => {
         "Task",
         "List",
         "Template",
-        "Paste a list",
       ]);
       fireEvent.click(choices.getByRole("button", { name: "Template" }));
       expect(dialog.getByRole("button", { name: "Create template" })).toBeDisabled();
@@ -216,6 +216,107 @@ describe("template usability", () => {
     expect(data.lists).toHaveLength(2);
     expect(data.items.find((item) => item.text === "Loose task")).toMatchObject({ listId: null });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it.each(["List", "Template"])(
+    "pastes into a named %s without losing its name or changing its kind",
+    async (label) => {
+      render(
+        <AppShell>
+          <Templates />
+          <DataProbe />
+        </AppShell>,
+      );
+      await screen.findByRole("heading", { name: "Templates" });
+      fireEvent.click(screen.getAllByRole("button", { name: "Add" }).at(-1)!);
+      const dialog = within(screen.getByRole("dialog"));
+      const choices = within(dialog.getByRole("group", { name: "Add type" }));
+      fireEvent.click(choices.getByRole("button", { name: label }));
+      const createLabel = label === "List" ? "Create list" : "Create template";
+      expect(dialog.getByRole("button", { name: createLabel })).toBeDisabled();
+      const name = dialog.getByLabelText(`${label} name (required)`);
+      fireEvent.change(name, { target: { value: "Named before pasting" } });
+      const items = dialog.getByLabelText(/Items — type or paste/);
+      fireEvent.change(items, { target: { value: "First item" } });
+      fireEvent.click(dialog.getByRole("button", { name: "Paste a list" }));
+      expect(name).toHaveValue("Named before pasting");
+      expect(items).toHaveValue("First item");
+      fireEvent.change(items, { target: { value: "First item\nP1 | Second item | 2026-11-09" } });
+      fireEvent.click(dialog.getByRole("button", { name: createLabel }));
+      const data: PocketData = JSON.parse(screen.getByTestId("data").textContent!);
+      const added = data.lists.filter((list) => list.title === "Named before pasting");
+      expect(added).toHaveLength(1);
+      expect(added[0]!.kind).toBe(label.toLowerCase());
+      const createdItems = data.items.filter((item) => item.listId === added[0]!.id);
+      expect(createdItems.map((item) => item.text)).toEqual(["First item", "Second item"]);
+      expect(createdItems[1]!.priority).toBe(1);
+      expect(createdItems[1]!.due).toBe(label === "Template" ? undefined : "2026-11-09");
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    },
+  );
+
+  it("pastes tasks into the chosen existing list without creating another list", async () => {
+    render(
+      <AppShell>
+        <Templates />
+        <DataProbe />
+      </AppShell>,
+    );
+    await screen.findByRole("heading", { name: "Templates" });
+    fireEvent.click(screen.getAllByRole("button", { name: "Add" }).at(-1)!);
+    const dialog = within(screen.getByRole("dialog"));
+    fireEvent.click(
+      within(dialog.getByRole("group", { name: "Add type" })).getByRole("button", { name: "Task" }),
+    );
+    fireEvent.click(dialog.getByRole("button", { name: "Paste a list" }));
+    fireEvent.change(dialog.getByLabelText("Tasks — one per line"), {
+      target: { value: "Buy fruit\nBuy rice" },
+    });
+    fireEvent.change(dialog.getByRole("combobox"), { target: { value: "list" } });
+    fireEvent.click(dialog.getByRole("button", { name: "No date" }));
+    fireEvent.click(dialog.getByRole("button", { name: "Add 2 tasks" }));
+    const data: PocketData = JSON.parse(screen.getByTestId("data").textContent!);
+    expect(data.lists).toHaveLength(2);
+    expect(
+      data.items
+        .filter((item) => item.listId === "list")
+        .map((item) => ({ text: item.text, due: item.due })),
+    ).toEqual([
+      { text: "Buy fruit", due: undefined },
+      { text: "Buy rice", due: undefined },
+    ]);
+  });
+
+  it.each(["list", "tpl"])("keeps contextual Paste items attached to %s", async (id) => {
+    function Launcher() {
+      const { openQuickAdd } = useUI();
+      return (
+        <button onClick={() => openQuickAdd({ mode: "paste", listId: id })}>Paste existing</button>
+      );
+    }
+    render(
+      <AppShell>
+        <Launcher />
+        <DataProbe />
+      </AppShell>,
+    );
+    await waitFor(() => expect(screen.getByTestId("data")).toHaveTextContent("Packing template"));
+    fireEvent.click(screen.getByRole("button", { name: "Paste existing" }));
+    const dialog = within(screen.getByRole("dialog"));
+    expect(dialog.queryByRole("group", { name: "Add type" })).not.toBeInTheDocument();
+    fireEvent.change(dialog.getByLabelText(/Items|Tasks/), {
+      target: { value: "P2 | Extra item | 2026-11-09" },
+    });
+    fireEvent.click(dialog.getByRole("button", { name: "Add 1 item" }));
+    const data: PocketData = JSON.parse(screen.getByTestId("data").textContent!);
+    expect(data.lists).toHaveLength(2);
+    expect(data.items.find((item) => item.text === "Extra item")).toMatchObject({
+      listId: id,
+      priority: 2,
+    });
+    expect(data.items.find((item) => item.text === "Extra item")!.due).toBe(
+      id === "tpl" ? undefined : "2026-11-09",
+    );
   });
 
   it.each([

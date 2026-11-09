@@ -50,7 +50,11 @@ function Shell({ children }: { children: ReactNode }) {
           Pocket Lists
         </Link>
         <button
-          onClick={() => ui.openQuickAdd()}
+          onClick={() =>
+            ui.openQuickAdd({
+              mode: section === "/templates" ? "template" : section === "/lists" ? "list" : "task",
+            })
+          }
           className="mt-6 inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-primary px-4 text-primary-foreground"
         >
           <Plus className="h-4 w-4" /> Add
@@ -98,7 +102,16 @@ function Shell({ children }: { children: ReactNode }) {
             <span aria-hidden className="hidden lg:block" />
             <div className="flex items-center gap-1">
               <button
-                onClick={() => ui.openQuickAdd()}
+                onClick={() =>
+                  ui.openQuickAdd({
+                    mode:
+                      section === "/templates"
+                        ? "template"
+                        : section === "/lists"
+                          ? "list"
+                          : "task",
+                  })
+                }
                 className="inline-flex h-11 items-center gap-1 rounded-full bg-primary px-4 text-primary-foreground lg:hidden"
               >
                 <Plus className="h-4 w-4" /> Add
