@@ -1,5 +1,7 @@
 # Pocket Lists
 
+> **Historical prototype:** This public repository contains the original local-first Pocket Lists prototype; v0.1.0 is its initial release. The current app has since evolved to include accounts, cross-device synchronization and assistant integrations. Try the current app at [pocketlists.clifhaus.com](https://pocketlists.clifhaus.com). The functionality described below belongs to this historical repository.
+
 A calm, local-first checklist notebook for everyday tasks and reusable routines, designed for phones and desktops.
 
 ## Start here
@@ -12,7 +14,7 @@ A calm, local-first checklist notebook for everyday tasks and reusable routines,
 
 ## Status
 
-[v0.1.0 — initial public release](https://github.com/ivie-clifford/pocket-lists/releases/tag/v0.1.0) is available. Pocket Lists remains under active development.
+[v0.1.0 — initial public release](https://github.com/ivie-clifford/pocket-lists/releases/tag/v0.1.0) is available. This repository preserves the historical prototype; the current product is developed separately.
 
 ## Features
 
