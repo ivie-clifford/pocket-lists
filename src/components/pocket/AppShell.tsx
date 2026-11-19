@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ListsPane } from "./ListsPane";
 import { LayoutList, Plus, Settings, Sun, Copy } from "lucide-react";
@@ -33,6 +33,20 @@ function Shell({ children }: { children: ReactNode }) {
           : "/";
   const split = section === "/lists" || section === "/templates";
   const [noticeVisible, setNoticeVisible] = useState(true);
+  const mainRef = useRef<HTMLElement>(null);
+  // Dismissed with the keyboard, the button disappears and focus would fall back to the top of the
+  // page, so move it to the page heading that is now first. A mouse or tap dismissal leaves focus alone.
+  const dismissNotice = (e: MouseEvent<HTMLButtonElement>) => {
+    const fromKeyboard = e.detail === 0;
+    setNoticeVisible(false);
+    if (!fromKeyboard) return;
+    requestAnimationFrame(() => {
+      const heading = mainRef.current?.querySelector<HTMLElement>("h1");
+      if (!heading) return;
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    });
+  };
   const [itemId, setItemId] = useState<string | null>(null);
   const [qa, setQa] = useState<{ open: boolean; opts: QuickAddOpts }>({ open: false, opts: {} });
   const ui = useMemo(
@@ -127,17 +141,37 @@ function Shell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </header>
-        <main className={`${CONTENT_W} flex-1 px-5 pb-36 lg:pb-16`}>
-          {noticeVisible && <section aria-label="New Pocket Lists version" className="mt-4 rounded-lg border border-border bg-accent p-4 text-accent-foreground">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="font-semibold">There's a newer version of Pocket Lists!</h2>
-                <p className="mt-2 text-sm">This original version stores your data locally on this device. Existing checklists do not automatically transfer to the new version.</p>
-                <a href="https://pocketlists.clifhaus.com" className="mt-3 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground">Visit the new Pocket Lists</a>
+        <main ref={mainRef} className={`${CONTENT_W} flex-1 px-5 pb-36 lg:pb-16`}>
+          {noticeVisible && (
+            <section
+              aria-label="New Pocket Lists version"
+              className="mt-4 rounded-lg border border-border bg-accent p-4 text-accent-foreground"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-semibold">There's a newer version of Pocket Lists!</h2>
+                  <p className="mt-2 text-sm">
+                    This original version stores your data locally on this device. Existing
+                    checklists do not automatically transfer to the new version.
+                  </p>
+                  <a
+                    href="https://pocketlists.clifhaus.com"
+                    className="mt-3 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground"
+                  >
+                    Visit the new Pocket Lists
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  className="min-h-11 min-w-11 rounded-full text-sm hover:bg-background/50"
+                  aria-label="Dismiss new version notice"
+                  onClick={dismissNotice}
+                >
+                  ×
+                </button>
               </div>
-              <button type="button" className="min-h-11 min-w-11 rounded-full text-sm hover:bg-background/50" aria-label="Dismiss new version notice" onClick={() => setNoticeVisible(false)}>×</button>
-            </div>
-          </section>}
+            </section>
+          )}
           {ready ? children : null}
         </main>
       </div>
