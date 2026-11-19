@@ -32,6 +32,7 @@ function Shell({ children }: { children: ReactNode }) {
           ? "/settings"
           : "/";
   const split = section === "/lists" || section === "/templates";
+  const [noticeVisible, setNoticeVisible] = useState(true);
   const [itemId, setItemId] = useState<string | null>(null);
   const [qa, setQa] = useState<{ open: boolean; opts: QuickAddOpts }>({ open: false, opts: {} });
   const ui = useMemo(
@@ -126,7 +127,19 @@ function Shell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </header>
-        <main className={`${CONTENT_W} flex-1 px-5 pb-36 lg:pb-16`}>{ready ? children : null}</main>
+        <main className={`${CONTENT_W} flex-1 px-5 pb-36 lg:pb-16`}>
+          {noticeVisible && <section aria-label="New Pocket Lists version" className="mt-4 rounded-lg border border-border bg-accent p-4 text-accent-foreground">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-semibold">There's a newer version of Pocket Lists!</h2>
+                <p className="mt-2 text-sm">This original version stores your data locally on this device. Existing checklists do not automatically transfer to the new version.</p>
+                <a href="https://pocketlists.clifhaus.com" className="mt-3 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground">Visit the new Pocket Lists</a>
+              </div>
+              <button type="button" className="min-h-11 min-w-11 rounded-full text-sm hover:bg-background/50" aria-label="Dismiss new version notice" onClick={() => setNoticeVisible(false)}>×</button>
+            </div>
+          </section>}
+          {ready ? children : null}
+        </main>
       </div>
 
       <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur lg:hidden">
